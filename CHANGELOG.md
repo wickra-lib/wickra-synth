@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `wickra-synth` (CLI): the reference `synth-core` consumer. Loads a `GenSpec`
+  from a `.json`/`.toml` file or the quick-spec flags, generates the batch or
+  streamed output, and prints it as a text summary, JSON (byte-identical to
+  `generate`), or CSV (`timestamp,open,high,low,close,volume`, read-back
+  verified against the ecosystem CSV reader).
 - `synth-core`: the data-driven generation engine. A serde `GenSpec` (regimes,
   microstructure, optional funding) plus a portable seeded PRNG (SplitMix64 →
   xoshiro256++, all randomness in the core) produce OHLCV candles, order-book
