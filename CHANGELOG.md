@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/node`: napi-rs bindings exposing a `Synth` class (`command` /
+  `version`) over the same `command_json` surface, with generated `index.js` /
+  `index.d.ts`, per-platform npm sub-packages, and node:test
+  smoke/completeness/golden tests.
 - `bindings/python`: PyO3/maturin bindings (`abi3-py39`) exposing a `Synth`
   class with `command` / `version` over the same `command_json` surface, with
   type stubs, `py.typed`, and smoke/completeness/golden tests.
