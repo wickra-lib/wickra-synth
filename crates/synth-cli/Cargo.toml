@@ -1,0 +1,34 @@
+# wickra-synth — the reference command-line consumer of synth-core.
+#
+# Loads a GenSpec (from a file or the quick-spec flags), generates the batch or
+# streamed output, and prints it as text, JSON, or CSV.
+[package]
+name = "wickra-synth"
+description = "Reference CLI for the deterministic synthetic market-microstructure generator: load a spec and print OHLCV, order book, trades and funding."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "wickra-synth"
+path = "src/main.rs"
+
+[dependencies]
+synth-core.workspace = true
+serde_json.workspace = true
+clap.workspace = true
+
+[dev-dependencies]
+# The CSV output is written in the ecosystem's `timestamp,open,high,low,close,volume`
+# form; this dev-dep reads it back with the canonical reader to prove round-trip.
+wickra-data.workspace = true
