@@ -1,0 +1,4 @@
+useDynLib(wickrasynth, .registration = TRUE, .fixes = "C_")
+export(wksynth_version)
+export(wksynth_new)
+export(wksynth_command)
