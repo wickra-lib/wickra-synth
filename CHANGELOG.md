@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `golden/`: the cross-language golden corpus — five `specs/*.json` (trend,
+  range, crash, vol, mixed) and their byte-exact `expected/*.json` `GenOutput`
+  fixtures, blessed from `synth-core::generate`. Every language binding replays
+  the specs and must reproduce the expected output byte-for-byte. No `data/`
+  directory: the seed is the complete input.
 - `bindings/r`: R bindings (`wickrasynth`) over the C ABI hub via `.Call`, with
   an external-pointer handle freed by a finalizer, the header/library provided
   out-of-tree through `WKSYNTH_INC`/`WKSYNTH_LIB`, and a plain-R test script

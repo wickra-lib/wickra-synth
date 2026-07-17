@@ -1,0 +1,15 @@
+{
+  "seed": 99,
+  "bars": 12,
+  "start_price": 500.0,
+  "start_ts": 1700000000,
+  "bar_secs": 3600,
+  "regimes": [
+    { "kind": "crash", "len": 12, "drift": 0.01, "vol": 0.03 }
+  ],
+  "microstructure": {
+    "book_depth": 6,
+    "spread_bps": 8.0,
+    "trade_rate": 12.0
+  }
+}
