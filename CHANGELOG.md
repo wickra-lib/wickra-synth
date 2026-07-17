@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/`: deep-dive documentation — `ARCHITECTURE.md` (workspace layout and the
+  core-only-randomness design), `GENSPEC.md` (the input specification),
+  `REGIMES.md` (the trend/range/crash/vol price-path formulas),
+  `MICROSTRUCTURE.md` (order book, trades and funding), `DETERMINISM.md` (the
+  PRNG and the fixed per-bar draw-order contract), and `Cookbook.md` (recipes).
+  `BENCHMARKS.md` now carries measured generation-throughput numbers.
+- `.github/workflows/`: the full CI suite — `ci.yml` (format/clippy on both
+  feature sets, a 3-OS × 2-feature test matrix, MSRV 1.86 + MSRV-node 1.88,
+  cargo-deny, a CLI smoke test, and per-binding jobs for the C ABI, Python,
+  Node.js, WASM, Go, C#, Java and R with header/index drift checks), plus
+  `codeql.yml`, `scorecard.yml`, `zizmor.yml`, `links.yml`, `bench.yml`,
+  `sync-metadata.yml` and a USER-GO-gated `release.yml`.
+- `examples/`: a runnable "generate a synthetic market" example in every
+  language (Rust, Python, Node.js, C, C++, Go, C#, Java, R), each printing the
+  same first three candles from seed 42 — a visible cross-language-equality
+  proof.
 - `synth-core` tests: `conformance` (serde round-trip of every spec/output type;
   unknown/missing fields and unknown regime kinds are rejected), `golden`
   (byte-exact against `golden/expected`), `stream_eq_batch` (the reassembled
