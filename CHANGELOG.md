@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/csharp`: .NET bindings (`Wickra.Synth`) over the C ABI hub via
+  `[LibraryImport]` P/Invoke, with a `SafeHandle`, a `DllImportResolver` that
+  probes the packaged/dev/CI layouts, and xUnit tests covering generate,
+  determinism, stream-vs-batch and the in-band error path.
 - `bindings/go`: cgo bindings over the C ABI hub exposing a `Synth` type
   (`New` / `Command` / `Close` / `Version`), with the header vendored under
   `include/` (drift-checked) and the prebuilt library staged per platform under
