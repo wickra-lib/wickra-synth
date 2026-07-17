@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/java`: JVM bindings (`org.wickra.synth.Synth`) over the C ABI hub via
+  the Foreign Function & Memory API (FFM/Panama), with an `AutoCloseable` handle
+  and JUnit 5 tests covering generate, determinism, stream-vs-batch candle
+  equality and the in-band error path.
 - `bindings/csharp`: .NET bindings (`Wickra.Synth`) over the C ABI hub via
   `[LibraryImport]` P/Invoke, with a `SafeHandle`, a `DllImportResolver` that
   probes the packaged/dev/CI layouts, and xUnit tests covering generate,
