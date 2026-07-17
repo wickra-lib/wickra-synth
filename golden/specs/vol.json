@@ -1,0 +1,15 @@
+{
+  "seed": 123,
+  "bars": 24,
+  "start_price": 100.0,
+  "start_ts": 1700000000,
+  "bar_secs": 300,
+  "regimes": [
+    { "kind": "vol", "len": 24, "drift": 0.0, "vol": 0.02 }
+  ],
+  "microstructure": {
+    "book_depth": 3,
+    "spread_bps": 5.0,
+    "trade_rate": 3.0
+  }
+}
