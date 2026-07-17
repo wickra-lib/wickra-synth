@@ -41,22 +41,38 @@ and R**, so a developer in any language draws the same synthetic market.
 
 ## Status
 
-Early development (0.1.0, unreleased). Built out in phases; this scaffold pins
-the repository, governance and supply-chain configuration ahead of the core
-engine. The generation model and command protocol are being settled and will be
-pinned by golden tests.
+Early development (0.1.0, unreleased). The core, the reference CLI, the
+ten-language binding surface, the golden corpus and the full CI matrix are in
+place; the generation model and command protocol are pinned by golden tests.
 
 ## Documentation
 
-Deep-dive documentation lands with the later phases. See
-[ARCHITECTURE.md](ARCHITECTURE.md) for the workspace layout and the PRNG
-determinism model.
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) — workspace layout and the
+  core-only-randomness design.
+- [GENSPEC.md](docs/GENSPEC.md) — the input specification and its fields.
+- [REGIMES.md](docs/REGIMES.md) — the trend / range / crash / vol price-path formulas.
+- [MICROSTRUCTURE.md](docs/MICROSTRUCTURE.md) — order book, trades and funding.
+- [DETERMINISM.md](docs/DETERMINISM.md) — the PRNG and the fixed draw-order contract.
+- [Cookbook.md](docs/Cookbook.md) — practical recipes.
 
 ## Use in any language
 
-The ten-language binding surface lands in a later phase; every binding forwards
-the same `command_json` string to the Rust core, so all ten draw byte-identical
-synthetic markets for a given seed.
+Every binding forwards the same `command_json` string to the Rust core, so all
+ten draw **byte-identical** synthetic markets for a given seed.
+
+```python
+from wickra_synth import Synth
+import json
+
+synth = Synth('{"seed":42,"bars":20,"start_price":100.0,'
+              '"regimes":[{"kind":"trend","len":20,"drift":0.002,"vol":0.01}],'
+              '"microstructure":{"book_depth":5,"spread_bps":4.0,"trade_rate":8.0}}')
+out = json.loads(synth.command('{"cmd":"generate"}'))
+print(len(out["candles"]))  # 20
+```
+
+Runnable examples for all ten languages — each printing the same first three
+candles — live in [`examples/`](examples/).
 
 ## Building from source
 
@@ -67,12 +83,12 @@ cargo test  --workspace
 
 ## Requirements
 
-- Rust 1.86+ (MSRV).
+- Rust 1.86+ (MSRV); the Node binding needs Rust 1.88+.
 
 ## Benchmarks
 
-Per-generation throughput is tracked in [BENCHMARKS.md](BENCHMARKS.md); the
-numbers land with the bench crate.
+Per-generation throughput is tracked in [BENCHMARKS.md](BENCHMARKS.md) and
+measured by the `synth-bench` crate (`cargo bench -p synth-bench`).
 
 ## Contributing
 
