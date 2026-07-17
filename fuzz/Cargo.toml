@@ -1,0 +1,47 @@
+[package]
+name = "wickra-synth-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = "1"
+# The core under test. Default features off so the fuzzers exercise the
+# single-threaded path (no rayon).
+synth-core = { path = "../crates/synth-core", default-features = false }
+
+# Detach from the parent workspace — cargo-fuzz builds this crate on its own with
+# sanitizer flags on a nightly toolchain.
+[workspace]
+
+[[bin]]
+name = "spec_parse"
+path = "fuzz_targets/spec_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "generate"
+path = "fuzz_targets/generate.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "rng_stream"
+path = "fuzz_targets/rng_stream.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "command_json"
+path = "fuzz_targets/command_json.rs"
+test = false
+doc = false
+bench = false
