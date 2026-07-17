@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "wickra-synth"
+abstract: >-
+  A deterministic synthetic market-microstructure generator built on the Wickra
+  core: a data-driven GenSpec and a portable seeded PRNG (SplitMix64 →
+  xoshiro256++) produce OHLCV candles plus order-book snapshots, trades and
+  funding, byte-identical for a given seed across platforms and exposed as a
+  JSON-over-C-ABI data API in ten languages.
+type: software
+authors:
+  - alias: kingchenc
+    website: "https://wickra.org"
+repository-code: "https://github.com/wickra-lib/wickra-synth"
+url: "https://wickra.org"
+license:
+  - MIT
+  - Apache-2.0
+keywords:
+  - trading
+  - synth
+  - indicators
+  - streaming
+  - finance

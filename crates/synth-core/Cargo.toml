@@ -1,0 +1,20 @@
+# synth-core — the data-driven synthetic-microstructure engine.
+#
+# The full engine (GenSpec, the portable SplitMix64 + xoshiro256++ PRNG, the
+# price walk, order-book / trade / funding synthesis, and the `command_json`
+# boundary) is built out in phase P-SYN-1. This crate currently exposes only the
+# version string so the workspace scaffolds and builds green.
+[package]
+name = "synth-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "Deterministic synthetic market-microstructure engine (OHLCV, order book, trades, funding) driven by a portable seeded PRNG."
+
+[lints]
+workspace = true

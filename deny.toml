@@ -1,0 +1,38 @@
+# cargo-deny configuration — supply-chain gate (advisories, licenses, bans, sources).
+
+[advisories]
+version = 2
+yanked = "deny"
+# Suppressed advisories (assessed as not affecting wickra-synth). Keep in
+# lock-step with osv-scanner.toml.
+ignore = []
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    "MPL-2.0",
+]
+confidence-threshold = 0.93
+
+# No scoped license exceptions are needed: synth has no network stack and pulls
+# in no crates outside the allow-list above.
+exceptions = []
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+# Everything comes from crates.io — synth has no git dependencies (it mirrors
+# the microstructure JSON shapes rather than depending on the exchange facade),
+# so there is no allow-org exception to make here.
+unknown-registry = "deny"
+unknown-git = "deny"
