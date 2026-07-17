@@ -1,0 +1,19 @@
+[package]
+name = "wickra-synth-example"
+description = "A runnable Rust example for the Wickra Synth core."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "gen"
+path = "src/main.rs"
+
+[dependencies]
+synth-core = { workspace = true }
+serde_json = { workspace = true }

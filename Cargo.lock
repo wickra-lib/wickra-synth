@@ -1295,6 +1295,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "wickra-synth-example"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "synth-core",
+]
+
+[[package]]
 name = "wickra-synth-node"
 version = "0.1.0"
 dependencies = [
