@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/python`: PyO3/maturin bindings (`abi3-py39`) exposing a `Synth`
+  class with `command` / `version` over the same `command_json` surface, with
+  type stubs, `py.typed`, and smoke/completeness/golden tests.
 - `bindings/c`: the no-hidden-allocation C ABI (`cdylib` + `staticlib`) — the hub
   every C-capable language (C, C++, C#, Go, Java, R) links against. Four
   functions (`wickra_synth_{new,command,free,version}`) expose the

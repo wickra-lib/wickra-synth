@@ -1,0 +1,27 @@
+[package]
+name = "wickra-synth-python"
+description = "Python bindings for wickra-synth: the data-driven generation core."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true
+publish = false
+
+[lib]
+name = "_wickra_synth"
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+# The core (serial by default at the workspace level; no rayon across the JSON
+# boundary — all randomness lives in the core regardless).
+synth-core = { workspace = true }
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py39"] }
