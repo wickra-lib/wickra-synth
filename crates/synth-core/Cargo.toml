@@ -1,9 +1,9 @@
-# synth-core — the data-driven synthetic-microstructure engine.
+# synth-core — the deterministic synthetic-microstructure engine.
 #
-# The full engine (GenSpec, the portable SplitMix64 + xoshiro256++ PRNG, the
-# price walk, order-book / trade / funding synthesis, and the `command_json`
-# boundary) is built out in phase P-SYN-1. This crate currently exposes only the
-# version string so the workspace scaffolds and builds green.
+# A serde `GenSpec` plus a portable seeded PRNG (SplitMix64 -> xoshiro256++)
+# produce OHLCV candles plus order-book snapshots, trades and funding, exposed
+# through a single `command_json` boundary so every language binding draws the
+# byte-identical synthetic market for a given seed.
 [package]
 name = "synth-core"
 version.workspace = true
@@ -15,6 +15,27 @@ repository.workspace = true
 homepage.workspace = true
 readme.workspace = true
 description = "Deterministic synthetic market-microstructure engine (OHLCV, order book, trades, funding) driven by a portable seeded PRNG."
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+thiserror = { workspace = true }
+# Optional data-parallel generation (single-symbol v1 is serial; the substream
+# mechanism in `rng` is what keeps a future parallel path deterministic).
+rayon = { workspace = true, optional = true }
+# Optional sanity oracle: run the wickra-core indicators over a generated stream
+# to assert it stays finite and in range.
+wickra-core = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+default = ["parallel"]
+parallel = ["dep:rayon"]
+validate = ["dep:wickra-core"]
 
 [lints]
 workspace = true
