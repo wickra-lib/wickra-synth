@@ -1,0 +1,33 @@
+[package]
+name = "wickra-synth-wasm"
+description = "WebAssembly bindings for wickra-synth — generate synthetic microstructure in the browser."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Modern rustc emits a wasm feature set (bulk-memory, sign-ext, …) that the
+# wasm-opt bundled with wasm-pack is too old to validate. The wasm-bindgen output
+# is already valid and functional; skip the optional size-only optimizer pass.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# The synth core as a direct path dep (not `workspace = true`) so
+# `default-features = false` is honored — cargo silently ignores it on an
+# inherited workspace dependency. Default features off means no rayon (the
+# generator is single-threaded here), so a wasm build is byte-identical to the
+# native one — the exact cross-language golden check.
+synth-core = { path = "../../crates/synth-core", version = "0.1.0", default-features = false }
+wasm-bindgen = "0.2"
