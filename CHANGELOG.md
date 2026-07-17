@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/c`: the no-hidden-allocation C ABI (`cdylib` + `staticlib`) — the hub
+  every C-capable language (C, C++, C#, Go, Java, R) links against. Four
+  functions (`wickra_synth_{new,command,free,version}`) expose the
+  `command_json` surface through a caller-owned length-out buffer protocol; the
+  cbindgen header `include/wickra_synth.h` is committed and drift-checked.
 - `wickra-synth` (CLI): the reference `synth-core` consumer. Loads a `GenSpec`
   from a `.json`/`.toml` file or the quick-spec flags, generates the batch or
   streamed output, and prints it as a text summary, JSON (byte-identical to

@@ -13,7 +13,7 @@
 
 [workspace]
 resolver = "2"
-members = ["crates/synth-core", "crates/synth-cli"]
+members = ["crates/synth-core", "crates/synth-cli", "bindings/c"]
 # The fuzz crate is its own (detached) workspace — cargo-fuzz builds it on a
 # nightly toolchain with sanitizer flags.
 exclude = ["fuzz"]
@@ -37,7 +37,9 @@ categories = ["finance", "simulation", "command-line-utilities"]
 wickra-data = "0.9"
 wickra-core = "0.9"
 # Workspace-internal crate, referenced by the CLI, bench and bindings.
-synth-core = { version = "0.1.0", path = "crates/synth-core" }
+# Serial by default (v1 is single-symbol); consumers that want data-parallel
+# generation opt in with `features = ["parallel"]`.
+synth-core = { version = "0.1.0", path = "crates/synth-core", default-features = false }
 # Serialization — the data-driven boundary (spec/command/output as JSON).
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
