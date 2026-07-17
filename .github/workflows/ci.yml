@@ -1,0 +1,415 @@
+name: CI
+
+# Workspace CI. The synth core and the reference CLI make up the
+# workspace so far; the C ABI and the ten language bindings each add their own
+# job to this file as they land (P-FS-3). Every job here must stay green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }}, ${{ matrix.features }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        features: ["--all-features", "--no-default-features"]
+    runs-on: ${{ matrix.os }}
+    # The CLI binary (wickra-synth) and the C ABI cdylib
+    # (wickra_synth) share a stem on Windows, so building both in one
+    # --workspace pass can race on the same .pdb and trip LNK1201. Dropping debug
+    # info removes the collision and keeps runner disk use down; the C ABI crate
+    # is built and tested on its own in the `c-abi` job.
+    env:
+      RUSTFLAGS: "-C debuginfo=0"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      # The PyO3 extension cdylib is built and tested by the `python` job via
+      # maturin; the C ABI cdylib by the `c-abi` job. Exclude both here.
+      - run: cargo build --workspace ${{ matrix.features }} --exclude wickra-synth-c --exclude wickra-synth-python
+      - run: cargo test --workspace ${{ matrix.features }} --exclude wickra-synth-c --exclude wickra-synth-python
+
+  lint:
+    name: Format & Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
+
+  msrv:
+    name: MSRV workspace (1.86)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: "1.86"
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      # Default features build. The Python binding needs maturin's platform link
+      # flags and is built by the `python` job. The Node binding is Rust 1.88
+      # (napi-build) and is gated by `msrv-node`. The core, CLI and C ABI stay at
+      # 1.86.
+      - run: cargo build --workspace --exclude wickra-synth-python --exclude wickra-synth-node
+
+  msrv-node:
+    name: MSRV node (1.88)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: "1.88"
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      # The Node binding's napi-build needs Rust >= 1.88, above the workspace
+      # 1.86 minimum, so it gets its own MSRV gate.
+      - run: cargo build -p wickra-synth-node
+
+  supply-chain:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@c7eb1735f09259a5035e8e5d44b1406b1cddc0fb # v2.83.0
+        with:
+          tool: cargo-deny
+      - run: cargo deny check
+
+  cli:
+    name: CLI smoke (quick-spec + spec file)
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-C debuginfo=0"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - run: cargo build -p wickra-synth
+      # Exercise both input paths (quick-spec flags and a spec file) and both
+      # output formats (human text and JSON). The JSON output must carry a
+      # `candles` array; the text output must report the bar count.
+      - name: Run end-to-end
+        run: |
+          ./target/debug/wickra-synth --seed 42 --bars 20 --format text | grep -q '^bars:'
+          ./target/debug/wickra-synth --seed 42 --bars 20 --format json | grep -q '"candles"'
+          ./target/debug/wickra-synth --spec golden/specs/trend.json --format json | grep -q '"candles"'
+
+  c-abi:
+    name: C ABI on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: Install cbindgen
+        uses: taiki-e/install-action@c7eb1735f09259a5035e8e5d44b1406b1cddc0fb # v2.83.0
+        with:
+          tool: cbindgen
+      - name: Build the C ABI library (cdylib + staticlib)
+        run: cargo build -p wickra-synth-c --release
+      - name: Rust unit tests
+        run: cargo test -p wickra-synth-c
+      # The generated header is platform-independent, so checking drift on one OS
+      # is enough — and avoids a spurious CRLF/LF diff on the Windows runner.
+      - name: Check the generated C header is in sync
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cd bindings/c
+          cbindgen --config cbindgen.toml --crate wickra-synth-c --output /tmp/wickra_synth.h
+          diff -u include/wickra_synth.h /tmp/wickra_synth.h
+      - name: Build and run the C / C++ example (CMake + ctest)
+        run: |
+          cmake -S examples/c -B examples/c/build
+          cmake --build examples/c/build --config Release
+          ctest --test-dir examples/c/build -C Release --output-on-failure
+
+  python:
+    name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - run: pip install maturin pytest
+      - run: maturin build --out dist
+        working-directory: bindings/python
+      - run: pip install --no-index --find-links bindings/python/dist wickra-synth
+      - run: pytest bindings/python/tests -q
+
+  node:
+    name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: ["22", "24"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: bindings/node/package-lock.json
+      # npm install (not npm ci): the per-platform optionalDependencies point at
+      # native packages that are not published until the first release.
+      - name: Install Node dependencies
+        run: cd bindings/node && npm install --no-audit --no-fund
+      - name: Build native module
+        run: cd bindings/node && npx napi build --platform --release
+      # The generated glue is platform-independent, so a drift check on one OS is
+      # enough — and avoids a spurious CRLF/LF diff on the Windows runner.
+      - name: Check index.js / index.d.ts are in sync
+        if: runner.os == 'Linux'
+        run: cd bindings/node && git diff --exit-code -- index.js index.d.ts
+      - name: Run Node tests
+        run: cd bindings/node && node --test
+
+  wasm:
+    name: WASM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@c7eb1735f09259a5035e8e5d44b1406b1cddc0fb # v2.83.0
+        with:
+          tool: wasm-pack
+      - name: Build the wasm binding (web target)
+        run: wasm-pack build --target web
+        working-directory: bindings/wasm
+      # Golden parity: build for Node, fold the spec through the wasm core and
+      # assert the matrix is byte-identical to the native core — the same
+      # canonical feature matrix every other binding produces.
+      - name: Build the wasm binding (nodejs target)
+        run: wasm-pack build --target nodejs
+        working-directory: bindings/wasm
+      - name: Assert wasm results match the native core
+        run: node --test
+        working-directory: bindings/wasm
+
+  go:
+    name: Go on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: "stable"
+          cache: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: Build the C ABI library
+        run: cargo build -p wickra-synth-c --release
+      - name: Vendored header in sync with the C ABI
+        shell: bash
+        run: |
+          if ! diff -u bindings/c/include/wickra_synth.h bindings/go/include/wickra_synth.h; then
+            echo "::error::bindings/go/include/wickra_synth.h is stale — copy bindings/c/include/wickra_synth.h over it"
+            exit 1
+          fi
+      - name: Stage the native library
+        shell: bash
+        run: |
+          case "$RUNNER_ARCH" in
+            X64) arch=amd64 ;;
+            ARM64) arch=arm64 ;;
+            *) echo "::error::unsupported RUNNER_ARCH '$RUNNER_ARCH'"; exit 1 ;;
+          esac
+          case "$RUNNER_OS" in
+            Linux)   dir="linux_$arch";   lib=target/release/libwickra_synth.so ;;
+            macOS)   dir="darwin_$arch";  lib=target/release/libwickra_synth.dylib ;;
+            Windows) dir="windows_$arch"; lib=target/release/wickra_synth.dll ;;
+          esac
+          mkdir -p "bindings/go/lib/$dir"
+          cp "$lib" "bindings/go/lib/$dir/"
+          echo "WICKRA_GO_LIBDIR=$PWD/bindings/go/lib/$dir" >> "$GITHUB_ENV"
+      - name: Check gofmt
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l bindings/go)"
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed on:"; echo "$unformatted"; exit 1
+          fi
+      - name: Vet and test the Go binding
+        shell: bash
+        run: |
+          export PATH="$WICKRA_GO_LIBDIR:$PATH"
+          cd bindings/go
+          go vet ./...
+          go test ./...
+
+  csharp:
+    name: C# on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: "8.0"
+      # The test project copies the native library from target/release (see the
+      # <Content> items), so build it in the release profile here.
+      - name: Build the C ABI library
+        run: cargo build -p wickra-synth-c --release
+      - name: Test the C# binding
+        run: dotnet test bindings/csharp/WickraSynth.Tests/WickraSynth.Tests.csproj -c Release
+
+  java:
+    name: Java on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      # The pom points native.lib.dir at target/debug, so build the debug profile.
+      - name: Build the C ABI library
+        run: cargo build -p wickra-synth-c
+      - uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - name: Test the Java binding
+        run: mvn -B -f bindings/java test
+
+  r:
+    name: R on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      WKSYNTH_INC: ${{ github.workspace }}/bindings/c/include
+      WKSYNTH_LIB: ${{ github.workspace }}/target/release
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: Build the C ABI library
+        run: cargo build -p wickra-synth-c --release
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+        with:
+          r-version: "release"
+          use-public-rspm: true
+      - name: Install and test the R binding
+        shell: bash
+        # github.workspace is a backslash path on Windows; Makevars(.win) (sh) and
+        # mingw need forward slashes. The Makevars do not bake an rpath, so the
+        # native library must be on the loader path at run time.
+        run: |
+          export WKSYNTH_INC="${WKSYNTH_INC//\\//}"
+          export WKSYNTH_LIB="${WKSYNTH_LIB//\\//}"
+          if command -v cygpath >/dev/null 2>&1; then
+            export PATH="$(cygpath -u "$WKSYNTH_LIB"):$PATH"
+          else
+            export LD_LIBRARY_PATH="$WKSYNTH_LIB:$LD_LIBRARY_PATH"
+            export DYLD_LIBRARY_PATH="$WKSYNTH_LIB:$DYLD_LIBRARY_PATH"
+          fi
+          R CMD INSTALL bindings/r
+          Rscript bindings/r/tests/run_tests.R
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@c7eb1735f09259a5035e8e5d44b1406b1cddc0fb # v2.83.0
+        with:
+          tool: cargo-llvm-cov
+      # The determinism moat lives in synth-core: the fold, the label
+      # formulas, canonical serialization and scaling. Measure it in isolation so
+      # patch coverage tracks the core.
+      - name: Generate coverage (lcov)
+        run: cargo llvm-cov -p synth-core --all-features --lcov --output-path lcov.info
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
