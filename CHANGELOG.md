@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/r`: R bindings (`wickrasynth`) over the C ABI hub via `.Call`, with
+  an external-pointer handle freed by a finalizer, the header/library provided
+  out-of-tree through `WKSYNTH_INC`/`WKSYNTH_LIB`, and a plain-R test script
+  covering generate, determinism, stream-vs-batch candle equality and the
+  in-band error path.
 - `bindings/java`: JVM bindings (`org.wickra.synth.Synth`) over the C ABI hub via
   the Foreign Function & Memory API (FFM/Panama), with an `AutoCloseable` handle
   and JUnit 5 tests covering generate, determinism, stream-vs-batch candle
