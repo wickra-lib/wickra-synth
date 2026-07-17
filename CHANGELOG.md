@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/wasm`: wasm-bindgen bindings exposing a `Synth` class (`command` /
+  `version`) plus a module-level `version()` over the same `command_json`
+  surface; a direct `default-features = false` core dep keeps the browser build
+  byte-identical to native, verified by a wasm-pack golden test.
 - `bindings/node`: napi-rs bindings exposing a `Synth` class (`command` /
   `version`) over the same `command_json` surface, with generated `index.js` /
   `index.d.ts`, per-platform npm sub-packages, and node:test
