@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `bindings/go`: cgo bindings over the C ABI hub exposing a `Synth` type
+  (`New` / `Command` / `Close` / `Version`), with the header vendored under
+  `include/` (drift-checked) and the prebuilt library staged per platform under
+  `lib/<goos>_<goarch>/`; tests cover generate, determinism, stream-vs-batch and
+  the in-band error path.
 - `bindings/wasm`: wasm-bindgen bindings exposing a `Synth` class (`command` /
   `version`) plus a module-level `version()` over the same `command_json`
   surface; a direct `default-features = false` core dep keeps the browser build
