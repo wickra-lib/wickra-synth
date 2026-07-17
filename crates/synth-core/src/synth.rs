@@ -1,11 +1,21 @@
 //! The `Synth` handle and the `command_json` FFI boundary (§6.9).
 
-use serde_json::{json, Value};
+use serde::Serialize;
+use serde_json::Value;
 
 use crate::error::{Error, Result};
 use crate::generate::{generate, generate_stream};
 use crate::output::{Event, GenOutput};
 use crate::spec::GenSpec;
+
+/// The `generate_stream` response envelope. Serializing through a struct (rather
+/// than the `json!` macro, which round-trips via `serde_json::Value` and
+/// alphabetizes nested keys) keeps each event's candle in the same field order
+/// as the batch `generate` output — the two paths stay byte-for-byte consistent.
+#[derive(Serialize)]
+struct StreamResponse<'a> {
+    events: &'a [Event],
+}
 
 /// A stateful synth handle. Holds an optional current spec; `command_json` is
 /// the single dispatch entry point every language binding calls.
@@ -100,7 +110,7 @@ impl Synth {
             "generate_stream" => {
                 let spec = self.resolve_spec(&v)?;
                 let events = generate_stream(&spec)?;
-                Ok(serde_json::to_string(&json!({ "events": events }))?)
+                Ok(serde_json::to_string(&StreamResponse { events: &events })?)
             }
             "version" => Ok(format!(r#"{{"version":"{}"}}"#, Self::version())),
             other => Err(Error::BadSpec(format!("unknown cmd: {other}"))),
@@ -175,6 +185,18 @@ mod tests {
             .unwrap();
         let v: Value = serde_json::from_str(&out).unwrap();
         assert!(v["events"].as_array().unwrap().len() >= 6);
+    }
+
+    #[test]
+    fn stream_candle_keeps_struct_field_order() {
+        // The streamed candle must serialize in the same field order as the
+        // batch candle (ts, open, …), not alphabetized — the `json!` macro used
+        // to round-trip events through `serde_json::Value` and reorder keys.
+        let mut s = Synth::new("").unwrap();
+        let out = s
+            .command_json(&format!(r#"{{"cmd":"generate_stream","spec":{SPEC}}}"#))
+            .unwrap();
+        assert!(out.contains(r#"{"type":"candle","candle":{"ts":"#));
     }
 
     #[test]
