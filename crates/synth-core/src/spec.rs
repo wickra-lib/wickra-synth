@@ -7,6 +7,7 @@ use crate::error::{Error, Result};
 /// The complete generator order. All substreams are derived deterministically
 /// from `seed`.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct GenSpec {
     /// Master seed; every draw derives from this.
     pub seed: u64,
@@ -28,6 +29,7 @@ pub struct GenSpec {
 
 /// One market regime: a run of `len` bars with a given behaviour.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct Regime {
     pub kind: RegimeKind,
     /// Number of bars in this regime (`> 0`).
@@ -54,6 +56,7 @@ pub enum RegimeKind {
 
 /// Order-book, trade and funding parameters.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct Microstructure {
     /// Levels per side per snapshot (`> 0`).
     pub book_depth: usize,
@@ -68,6 +71,7 @@ pub struct Microstructure {
 
 /// Periodic funding-rate parameters.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(deny_unknown_fields)]
 pub struct FundingSpec {
     /// Emit a funding sample every `interval_bars` bars (`> 0`).
     pub interval_bars: usize,

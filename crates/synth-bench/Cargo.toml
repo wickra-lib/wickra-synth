@@ -1,0 +1,31 @@
+[package]
+name = "synth-bench"
+description = "Criterion benchmarks for the Wickra Synth core: generation scaling by bar count, book depth and trade rate, on the parallel and single-threaded engines, plus JSON serialization."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# Default features off (inherited from the workspace edge); the `parallel`
+# feature below re-enables rayon so the default bench measures the parallel path
+# and `--no-default-features` measures the single-threaded (WASM) path.
+synth-core = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+default = ["parallel"]
+parallel = ["synth-core/parallel"]
+
+[[bench]]
+name = "synth"
+harness = false

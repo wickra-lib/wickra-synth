@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `synth-core` tests: `conformance` (serde round-trip of every spec/output type;
+  unknown/missing fields and unknown regime kinds are rejected), `golden`
+  (byte-exact against `golden/expected`), `stream_eq_batch` (the reassembled
+  event stream equals the batch output), `rng_vectors` (fixed SplitMix64 /
+  xoshiro256++ reference vectors — the reproducibility anchor), and
+  `proptest_invariants` (random specs stay finite and well-formed; same seed →
+  identical output).
+- `fuzz/`: cargo-fuzz targets `spec_parse`, `generate` (bounded to avoid OOM),
+  `rng_stream`, and `command_json` — the parse/generate/PRNG/FFI surfaces must
+  never panic on arbitrary input.
+- `synth-bench`: Criterion benchmarks for `generate` scaling by bar count, book
+  depth and trade rate, on the parallel and single-threaded engines.
+- `GenSpec`/`Regime`/`Microstructure`/`FundingSpec` now reject unknown fields
+  (`deny_unknown_fields`) so a typo'd spec is an error, not silently ignored.
 - `golden/`: the cross-language golden corpus — five `specs/*.json` (trend,
   range, crash, vol, mixed) and their byte-exact `expected/*.json` `GenOutput`
   fixtures, blessed from `synth-core::generate`. Every language binding replays
