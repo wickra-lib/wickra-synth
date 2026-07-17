@@ -1,0 +1,19 @@
+{
+  "seed": 2024,
+  "bars": 32,
+  "start_price": 100.0,
+  "start_ts": 1700000000,
+  "bar_secs": 3600,
+  "regimes": [
+    { "kind": "trend", "len": 8, "drift": 0.003, "vol": 0.012 },
+    { "kind": "range", "len": 8, "drift": 0.0, "vol": 0.008 },
+    { "kind": "crash", "len": 8, "drift": 0.01, "vol": 0.03 },
+    { "kind": "vol", "len": 8, "drift": 0.0, "vol": 0.02 }
+  ],
+  "microstructure": {
+    "book_depth": 5,
+    "spread_bps": 4.0,
+    "trade_rate": 6.0,
+    "funding": { "interval_bars": 4, "base_rate": 0.0001, "sensitivity": 0.75 }
+  }
+}

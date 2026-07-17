@@ -1,0 +1,15 @@
+{
+  "seed": 7,
+  "bars": 16,
+  "start_price": 250.0,
+  "start_ts": 1700000000,
+  "bar_secs": 900,
+  "regimes": [
+    { "kind": "range", "len": 16, "drift": 0.0, "vol": 0.008 }
+  ],
+  "microstructure": {
+    "book_depth": 4,
+    "spread_bps": 3.0,
+    "trade_rate": 5.0
+  }
+}
