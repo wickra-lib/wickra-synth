@@ -22,4 +22,6 @@ exclude = [
     "^https?://pypi\\.org/project/wickra-synth",
     "^https?://www\\.npmjs\\.com/package/wickra-synth",
     "^https?://pkg\\.go\\.dev/github\\.com/wickra-lib/wickra-synth-go",
+    "^https?://www\\.nuget\\.org/packages/Wickra\\.Synth",
+    "^https?://central\\.sonatype\\.com/artifact/org\\.wickra/wickra-synth",
 ]

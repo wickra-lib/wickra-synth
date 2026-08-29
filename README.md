@@ -4,12 +4,23 @@
 
 [![Built on Wickra](https://img.shields.io/badge/built%20on-wickra-3b82f6)](https://github.com/wickra-lib/wickra)
 [![Status](https://img.shields.io/badge/status-pre--release-orange)](https://github.com/wickra-lib/wickra-synth)
-[![CI](https://github.com/wickra-lib/wickra-synth/actions/workflows/ci.yml/badge.svg)](https://github.com/wickra-lib/wickra-synth/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/wickra-lib/wickra-synth/actions/workflows/codeql.yml/badge.svg)](https://github.com/wickra-lib/wickra-synth/actions/workflows/codeql.yml)
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
-[![OpenSSF Scorecard](https://img.shields.io/badge/OpenSSF-Scorecard-3b82f6)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-synth)
-[![Deterministic across 10 languages](https://img.shields.io/badge/deterministic%20across-10%20languages-3b82f6)](#use-in-any-language)
-[![Docs](https://img.shields.io/badge/docs-wickra.org-3b82f6)](https://wickra.org)
+[![CI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/ci.svg)](https://github.com/wickra-lib/wickra-synth/actions/workflows/ci.yml)
+[![CodeQL](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/codeql.svg)](https://github.com/wickra-lib/wickra-synth/actions/workflows/codeql.yml)
+[![codecov](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/codecov.svg)](https://codecov.io/gh/wickra-lib/wickra-synth)
+[![GitHub release](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/release.svg)](https://github.com/wickra-lib/wickra-synth/releases/latest)
+[![crates.io](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/crates.svg)](https://crates.io/crates/wickra-synth)
+[![PyPI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/pypi.svg)](https://pypi.org/project/wickra-synth/)
+[![npm](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/npm.svg)](https://www.npmjs.com/package/wickra-synth)
+[![NuGet](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/nuget.svg)](https://www.nuget.org/packages/Wickra.Synth)
+[![Maven Central](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/maven.svg)](https://central.sonatype.com/artifact/org.wickra/wickra-synth)
+[![Go module](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/go.svg)](https://pkg.go.dev/github.com/wickra-lib/wickra-synth-go)
+[![R-universe](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/r-universe.svg)](https://wickra-lib.r-universe.dev)
+[![License: MIT OR Apache-2.0](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/license.svg)](#license)
+[![OpenSSF Scorecard](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/scorecard.svg)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-synth)
+[![OpenSSF Best Practices](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/best-practices.svg)](https://www.bestpractices.dev)
+[![Build provenance](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/provenance.svg)](https://github.com/wickra-lib/wickra-synth/attestations)
+[![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/docs.svg)](https://wickra.org)
+[![Verified across 10 languages](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/verified.svg)](golden/)
 
 ---
 
@@ -117,3 +128,26 @@ conditions.
 `wickra-synth` generates **synthetic** market data for testing, training and
 demonstration. It is not real market data and is not financial advice; it comes
 with no warranty.
+
+---
+
+<p align="center">
+  <a href="https://github.com/wickra-lib/wickra-synth">
+    <img alt="GitHub stars" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/stars.svg">
+  </a>
+  <a href="https://github.com/wickra-lib/wickra-synth/network/members">
+    <img alt="GitHub forks" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/forks.svg">
+  </a>
+  <a href="https://github.com/wickra-lib/wickra-synth/issues">
+    <img alt="GitHub issues" src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/issues.svg">
+  </a>
+</p>
+
+<p align="center">
+  Built on <a href="https://github.com/wickra-lib/wickra">Wickra</a>. If it saved you time, the cheapest way to say thanks is to ⭐ the repo.
+</p>
+
+<p align="center">
+  <img alt="wickra-synth star history" width="640"
+       src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/star-history.svg">
+</p>
