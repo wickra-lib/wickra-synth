@@ -28,7 +28,7 @@
 
 **Deterministic synthetic market microstructure — OHLCV, order book, trades and funding from a single seed, byte-identical across ten languages.**
 
-> **Part of the [Wickra ecosystem](https://github.com/wickra-lib):** the same
+> **Part of the [Wickra ecosystem](https://github.com/wickra-lib):** the same data-driven core and ten-language binding surface also power [wickra-exchange](https://github.com/wickra-lib/wickra-exchange), [wickra-backtest](https://github.com/wickra-lib/wickra-backtest), [wickra-terminal](https://github.com/wickra-lib/wickra-terminal) and 20 more — see [the full list](https://github.com/wickra-lib).
 > data-driven core and ten-language binding surface also power
 > [wickra-backtest](https://github.com/wickra-lib/wickra-backtest),
 > [wickra-screener](https://github.com/wickra-lib/wickra-screener),
