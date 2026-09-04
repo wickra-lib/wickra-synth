@@ -22,6 +22,24 @@ updates:
         patterns: ["*"]
         exclude-patterns: ["napi", "napi-derive", "napi-build"]
 
+  # The fuzz crate is a detached workspace (fuzz/Cargo.toml declares its own
+  # [workspace]), so the root cargo entry above does not reach it and
+  # libfuzzer-sys was watched by nothing.
+  - package-ecosystem: cargo
+    directory: "/fuzz"
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(cargo)"
+    groups:
+      fuzz:
+        patterns: ["*"]
+
   # Node binding npm dependencies.
   - package-ecosystem: npm
     directory: "/bindings/node"
@@ -108,6 +126,23 @@ updates:
       prefix: "deps(nuget)"
     groups:
       nuget:
+        patterns: ["*"]
+
+  # The Go example is its own module (examples/go/go.mod), separate from the
+  # binding module below, and was likewise unwatched.
+  - package-ecosystem: gomod
+    directory: "/examples/go"
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(gomod)"
+    groups:
+      go-example:
         patterns: ["*"]
 
   # Go binding (Go modules).

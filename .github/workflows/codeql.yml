@@ -1,9 +1,14 @@
 name: CodeQL
 
-# Static analysis security testing. Analyses the Rust core with GitHub's CodeQL
-# engine; the Python / JavaScript binding surfaces are added to the matrix when
-# those bindings land (P-FS-3). Results appear under Security -> Code scanning.
-# `build-mode: none` analyses source directly — no compilation step.
+# Static analysis security testing. The matrix covers every language in the
+# repository, not just Rust: the four places a memory mistake is actually
+# possible here are the C ABI (raw pointers), the Go binding (unsafe.Pointer
+# through cgo), the R glue (C with an external-pointer finalizer) and the C++
+# hull, and three of those four were unscanned. Results appear under
+# Security -> Code scanning.
+#
+# `build-mode: none` reads source directly; C#, Java, Go and C/C++ are compiled,
+# because CodeQL sees exactly what the compiler walks and nothing else.
 on:
   push:
     branches: [main]
@@ -19,6 +24,7 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    timeout-minutes: 60 # backstop: database build plus query pack execution, per language
     permissions:
       security-events: write # upload CodeQL results to code-scanning
       packages: read
@@ -28,19 +34,119 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Read as source: nothing here has to be compiled for the extractor to
+          # see it.
           - language: rust
             build-mode: none
+          - language: python
+            build-mode: none
+          # The napi glue and the loader; the generated index.js / index.d.ts are
+          # excluded by the config file, and everything else is hand-written.
+          - language: javascript-typescript
+            build-mode: none
+          # Compiled, because CodeQL sees exactly what the compiler walks and
+          # nothing else. `manual` rather than `autobuild` for C# and C/C++:
+          # there are two C# projects and a CMake tree here, and guessing which
+          # to build is how a scan ends up quietly covering the wrong one.
+          - language: csharp
+            build-mode: manual
+          - language: java-kotlin
+            build-mode: manual
+          # Go takes autobuild: its extractor runs its own build and finds the
+          # module in the subdirectory, which is what the language wants. With a
+          # manual command CodeQL traced the build and finalised an empty
+          # database.
+          - language: go
+            build-mode: autobuild
+          - language: c-cpp
+            build-mode: manual
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      # Only the Java build needs this, and it needs a newer JDK than the runner
+      # default: the binding targets java.lang.foreign and the pom sets
+      # release 22.
+      - name: Set up JDK 25
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+
+      - name: Set up .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+
+      # Go, C/C++ and C# all need the C ABI library present before they build:
+      # Go links it through cgo, the C examples link it via CMake, and the C#
+      # test project copies it out of target/release. One cargo build serves all
+      # three.
+      - name: Install Rust toolchain
+        if: matrix.language == 'go' || matrix.language == 'c-cpp' || matrix.language == 'csharp'
+        uses: ./.github/actions/setup-rust
+
+      - name: Build the C ABI library
+        if: matrix.language == 'go' || matrix.language == 'c-cpp' || matrix.language == 'csharp'
+        run: cargo build -p wickra-synth-c --release
+
+      # Staged before CodeQL autobuilds: the cgo directives point at
+      # lib/<goos>_<goarch>, so without the library there the build cannot link
+      # and nothing is extracted.
+      - name: Stage the native library for cgo
+        if: matrix.language == 'go'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bindings/go/lib/linux_amd64
+          cp target/release/libwickra_synth.so bindings/go/lib/linux_amd64/
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          config-file: .github/codeql/codeql-config.yml
+
+      # The C examples consume the header and the hand-written C++ RAII hull, so
+      # compiling them is what puts both in the database.
+      # bindings/r/src/wickra_synth.c is not covered here: it is built by the R
+      # toolchain during package install, and pulling that in would add a fragile
+      # dependency for one file. Said plainly rather than left to look like
+      # coverage.
+      - name: Build the C and C++ examples
+        if: matrix.language == 'c-cpp'
+        run: |
+          cmake -S examples/c -B examples/c/build
+          cmake --build examples/c/build --config Release
+
+      # Both projects, not just the library: the test project is where the handle
+      # lifetime is actually exercised, and the example is the code people copy.
+      - name: Build the C# binding, tests and example
+        if: matrix.language == 'csharp'
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet build bindings/csharp/WickraSynth.Tests/WickraSynth.Tests.csproj -c Release
+          dotnet build examples/csharp/Gen -c Release
+
+      # -DskipTests, not -Dmaven.test.skip: the tests still compile, and they are
+      # half the hand-written Java in the repository. CodeQL needs the code
+      # compiled, not exercised.
+      - name: Build the Java binding
+        if: matrix.language == 'java-kotlin'
+        run: mvn -B -f bindings/java test-compile -DskipTests
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
