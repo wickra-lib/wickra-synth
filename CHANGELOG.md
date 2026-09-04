@@ -141,7 +141,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   does, so without this the published reference omits feature-gated items and
   the nightly-only path is exercised nowhere before the release.
 
+- Seven CI jobs the pipeline was missing: `fuzz-smoke` (all four targets, 30 s
+  each, list derived from `cargo fuzz list`), `binding-surface` (the five
+  invariant scripts), `semver` (`cargo-semver-checks` on `synth-core`),
+  `examples-smoke` (every example actually run, in all ten reaches),
+  `python-wheel-container-smoke` (manylinux and musllinux), a non-blocking
+  `links` copy of the weekly lychee run, and `osv-scan`.
+- `.github/workflows/actionlint.yml` — workflow correctness and, through the
+  bundled shellcheck, the shell inside every `run:` block. zizmor reads the
+  workflows for security; nothing read them for whether they work.
+- `.github/workflows/codspeed.yml` — instruction counts per pull request. The
+  bench crate's `criterion` is now `codspeed-criterion-compat` under that name;
+  without the alias the benches run under the CodSpeed runner and report
+  nothing.
+- `.github/codeql/codeql-config.yml`, and six more languages in the CodeQL
+  matrix. Rust was the only one analysed, so three of the four places a memory
+  mistake is possible here — the Go binding's `unsafe.Pointer`, the R glue's
+  external-pointer finalizer, the hand-written C++ hull — were unscanned.
+- Dependabot entries for the fuzz crate (a detached workspace the root `cargo`
+  entry never reached) and the Go example module.
+
 ### Changed
+
+- Every workflow job has a `timeout-minutes`. Nineteen had none and inherited
+  GitHub's six-hour default, so a job wedged on a hung download held a runner
+  for six hours while the pull request read as merely slow.
+- The Python CI job installs the hash-pinned
+  `.github/requirements/ci-dev.txt` instead of `pip install maturin pytest`. The
+  lock existed for the OpenSSF pinned-dependencies check and nothing installed
+  it, so the pinning proved nothing.
 
 - The R binding builds without our CI environment. It linked against a header
   and library handed to it through `WKSYNTH_INC` / `WKSYNTH_LIB`, which only our
@@ -170,6 +198,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `examples/go/go.mod` required `.../bindings/go v0.0.0` with no `replace`
+  directive — a version no module proxy can resolve, for a module that lives
+  in this repository. `go build .` failed with "missing go.sum entry" and
+  always had; `examples/README.md` listed it as `go run .` and nothing ran it.
+- `.github/requirements/ci-dev.txt` was compiled against Python 3.12 and pinned
+  pytest 9, which cannot be installed on the 3.9 row of the matrix.
+  Recompiled against 3.9, the oldest interpreter, so one lock covers every row.
+- Three action pins carried a version comment that disagreed with the SHA, and
+  Dependabot acts on the comment: `Swatinem/rust-cache` was pinned to an
+  untagged commit labelled `# v2`, `actions/setup-node` was labelled `v6.4.0` on
+  three lines and `v7.0.0` on the same SHA elsewhere, and
+  `lycheeverse/lychee-action` was labelled `# v2` for a v2.9.0 commit.
+- Three workflow headers described bindings that had long since landed as still
+  to come, each citing `P-FS-3` — a phase id belonging to a different
+  repository — and `release.yml` described this project's Python binding as
+  "pure canonicalization + hashing", which is a different project entirely.
 - The first recipe in `docs/Cookbook.md` passed `--regime`, which the CLI does
   not accept — the flag is `--kind`. The documented command exited with
   `unexpected argument`.
