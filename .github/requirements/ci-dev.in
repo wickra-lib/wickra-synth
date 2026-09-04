@@ -1,7 +1,12 @@
 # Python dev dependencies for the binding CI (build + test). Compiled to a
-# hash-locked ci-dev.txt with:
-#   uv pip compile --generate-hashes .github/requirements/ci-dev.in -o .github/requirements/ci-dev.txt
-# The synth's Python tests only build the extension and parse JSON reports,
-# so no array/math dependency (numpy) is needed — one lockfile covers py39-py313.
+# hash-locked ci-dev.txt by scripts/update-lockfiles.sh, which runs:
+#   uv pip compile --python-version 3.9 --generate-hashes ci-dev.in -o ci-dev.txt
+#
+# --python-version 3.9 is the whole trick to one lockfile. The synth's Python
+# tests only build the extension and parse JSON, so there is no numpy in the
+# closure and no cp39/cp313 wheel split to lock around; resolving against the
+# oldest supported interpreter then gives a set every row of the matrix can
+# install. A lock compiled against 3.12 pulled pytest 9, which cannot be
+# installed on the 3.9 row at all.
 maturin
 pytest
