@@ -4,7 +4,9 @@
   "description": "Native binding for wickra-synth (Linux x64 GNU). Installed automatically as an optional dependency of wickra-synth on matching platforms.",
   "main": "wickra-synth.linux-x64-gnu.node",
   "files": [
-    "wickra-synth.linux-x64-gnu.node"
+    "wickra-synth.linux-x64-gnu.node",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "license": "MIT OR Apache-2.0",
   "engines": {
