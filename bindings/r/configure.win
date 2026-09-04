@@ -1,0 +1,64 @@
+#!/bin/sh
+# Windows build: stage the wickra-synth C ABI (header + wickra_synth.dll) into
+# src/ so the package object links against the DLL directly and install.libs.R
+# bundles it beside wickrasynth.dll.
+#
+# There is no name collision to work around here: the package compiles to
+# wickrasynth.dll and the C ABI is wickra_synth.dll, so mingw can resolve the
+# import stubs straight out of the DLL and no import library has to be built.
+#
+# Self-contained by default: download the prebuilt
+# wickra-synth-c-<triple>.tar.gz release asset matching this package's version.
+# Set WKSYNTH_INC + WKSYNTH_LIB to build against a locally built C ABI instead
+# (the dev override our own CI uses).
+set -e
+
+wksynth_download() {
+  _url="$1"
+  _dest="$2"
+  _attempt=1
+  while [ "${_attempt}" -le 6 ]; do
+    if "${R_HOME}/bin/Rscript" -e "download.file('${_url}', '${_dest}', mode = 'wb', quiet = TRUE)"; then
+      return 0
+    fi
+    echo "wickra-synth: download attempt ${_attempt}/6 failed (${_url}); the release asset may still be propagating - retrying in 20s..."
+    sleep 20
+    _attempt=$((_attempt + 1))
+  done
+  echo "wickra-synth: failed to download ${_url} after 6 attempts"
+  return 1
+}
+
+if [ -n "${WKSYNTH_INC}" ] && [ -n "${WKSYNTH_LIB}" ]; then
+  echo "wickra-synth: using C ABI from WKSYNTH_INC / WKSYNTH_LIB (dev override)"
+  inc="${WKSYNTH_INC}"
+  lib="${WKSYNTH_LIB}"
+else
+  # Detect the R architecture, not the shell's. On the Windows/arm64 runner
+  # `uname -m` reports x86_64 (the shell runs under emulation), so the x64 C ABI
+  # would be pulled into an arm64 R and fail to load with "%1 is not a valid
+  # Win32 application". R.version$arch reflects the R build that loads the DLL.
+  arch=$("${R_HOME}/bin/Rscript" -e 'cat(R.version$arch)')
+  case "${arch}" in
+    x86_64) triple="x86_64-pc-windows-msvc" ;;
+    aarch64 | arm64) triple="aarch64-pc-windows-msvc" ;;
+    *) echo "wickra-synth: unsupported Windows arch '${arch}' - set WKSYNTH_INC/WKSYNTH_LIB"; exit 1 ;;
+  esac
+  version=$(sed -n 's/^Version:[[:space:]]*//p' DESCRIPTION)
+  url="https://github.com/wickra-lib/wickra-synth/releases/download/v${version}/wickra-synth-c-${triple}.tar.gz"
+  echo "wickra-synth: downloading C ABI ${triple} for v${version}"
+  wksynth_download "${url}" "src/wickra-synth-c.tar.gz" || exit 1
+  "${R_HOME}/bin/Rscript" -e "untar('src/wickra-synth-c.tar.gz', exdir = 'src/wickra-synth-c')"
+  inc="src/wickra-synth-c/wickra-synth-c-${triple}/include"
+  lib="src/wickra-synth-c/wickra-synth-c-${triple}/lib"
+fi
+
+cp "${inc}/wickra_synth.h" src/wickra_synth.h
+if [ ! -f "${lib}/wickra_synth.dll" ]; then
+  echo "wickra-synth: no wickra_synth.dll found under ${lib}"
+  exit 1
+fi
+cp "${lib}/wickra_synth.dll" src/wickra_synth.dll
+
+echo "wickra-synth: configured (bundled wickra_synth.dll)"
+exit 0

@@ -110,8 +110,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fixture list derived from the corpus at configure time so a new spec is picked
   up without editing C.
 
+- `scripts/`: five invariant checks nothing in the repository performed.
+  `check_version_sync.py` (nineteen version touchpoints across six package
+  managers, with exact counts), `check_license_copies.py` (every published
+  package carries the texts its SPDX expression names),
+  `check_readme_links.py` (a binding README is a registry long description and
+  cannot use repository-relative links), `check_binding_surface.py` (every
+  binding exposes the whole C ABI, spelled its own way) and
+  `check_r_abi_skew.py` (the R wrapper against the ABI its `DESCRIPTION`
+  names). Plus `scripts/update-lockfiles.sh`, which regenerates the Cargo, npm
+  and hash-pinned Python locks and fetches `uv` only on request, against a
+  recorded checksum.
+- Five issue templates — detailed bug report, detailed feature request,
+  performance regression, documentation, question — and the long-form
+  pull-request template, reachable with `?template=detailed.md`.
+- `LICENSES/MIT.txt` and `LICENSES/Apache-2.0.txt`, the REUSE-conformant second
+  copies, and `docs/README.md`, the signpost that says which pages under
+  `docs/` are contracts the tests enforce.
+- `bindings/csharp/README.md`, the developer view of that directory (the file
+  NuGet renders stays one level down).
+- Licence texts beside every published package: `synth-core`, `wickra-synth`,
+  and the Python, Node and WebAssembly bindings. The npm manifests list them in
+  `files`; wasm-pack had been reporting their absence on every build.
+- `README.md`: `Project layout`, `Building everything from source`, `Testing`
+  and `Ecosystem`, a runnable command above the first heading, and a
+  Requirements table naming all eight declared floors and the manifest each one
+  lives in.
+- `docs.rs` metadata (`all-features`, `--cfg docsrs`) on both published crates.
+  docs.rs builds with nightly and sets `docsrs`; GitHub CI is stable and never
+  does, so without this the published reference omits feature-gated items and
+  the nightly-only path is exercised nowhere before the release.
+
 ### Changed
 
+- The R binding builds without our CI environment. It linked against a header
+  and library handed to it through `WKSYNTH_INC` / `WKSYNTH_LIB`, which only our
+  own R job sets — so r-universe, which runs `R CMD INSTALL` with no such
+  variables, could never have produced a binary. `configure` and `configure.win`
+  now download the `wickra-synth-c-<triple>.tar.gz` release asset named by
+  `DESCRIPTION: Version` and bundle it beside the package object, with an rpath
+  on Unix. `WKSYNTH_INC` / `WKSYNTH_LIB` remain the developer override.
+  `DESCRIPTION` gains `Depends: R (>= 4.1)`.
+- `bindings/node/package.json` stops listing `npm` in `files`. That directory
+  holds the six per-platform manifests npm installs from the registry; shipping
+  them inside the main tarball as well served nothing.
 - `wickra-core` / `wickra-data` move from `0.9` to `1.0`, the published line.
 
 ### Removed
@@ -135,5 +177,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   truncated to a sentence fragment.
 - `BENCHMARKS.md` reported generation times three to five times slower than the
   bench measures. The table is re-measured, and now names the machine.
+- Four binding READMEs linked their licences relatively (`../../LICENSE-MIT`).
+  Those files are rendered by PyPI, npm, NuGet, pkg.go.dev and r-universe with
+  no repository around them, so the links were broken on every page a consumer
+  reads.
+- `SECURITY.md`'s supported-versions table said `0.1.x` where every other
+  version touchpoint says `0.1.0`, so a bump would have left it behind
+  silently.
 
 [Unreleased]: https://github.com/wickra-lib/wickra-synth/commits/main

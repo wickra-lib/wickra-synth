@@ -35,5 +35,13 @@ serde_json = { workspace = true }
 # and every consumer (native, WASM, fuzz) builds the same code path.
 validate = ["dep:wickra-core"]
 
+[package.metadata.docs.rs]
+# docs.rs must build the feature-gated items and mark them, or the published
+# reference silently omits whatever sits behind a feature. `--cfg docsrs` is what
+# the `doc_cfg` attribute keys on; GitHub CI is stable and never sets it, so this
+# is the only place the nightly-only path is exercised.
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [lints]
 workspace = true

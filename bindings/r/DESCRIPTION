@@ -9,8 +9,10 @@ Description: R bindings for wickra-synth over its C ABI hub: a seeded GenSpec
 License: MIT + file LICENSE | Apache License 2.0
 URL: https://github.com/wickra-lib/wickra-synth
 BugReports: https://github.com/wickra-lib/wickra-synth/issues
+Depends: R (>= 4.1)
 Encoding: UTF-8
 NeedsCompilation: yes
-SystemRequirements: the wickra-synth C ABI shared library (WKSYNTH_LIB)
-    and its header (WKSYNTH_INC).
+SystemRequirements: none. configure downloads the prebuilt wickra-synth C
+    ABI matching this package's version and bundles it; set WKSYNTH_INC and
+    WKSYNTH_LIB to build against a local one instead.
 RoxygenNote: 7.3.2

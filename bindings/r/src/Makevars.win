@@ -1,4 +1,7 @@
-# On Windows the C ABI DLL is linked directly (mingw resolves the import stubs
-# from wickra_synth.dll); the loader finds it via PATH at run time.
-PKG_CPPFLAGS = -I$(WKSYNTH_INC)
-PKG_LIBS = -L$(WKSYNTH_LIB) -l:wickra_synth.dll
+# Windows: configure.win stages the C ABI header and wickra_synth.dll into src/.
+# mingw resolves the import stubs from the DLL directly, so no import library is
+# needed, and the package DLL (wickrasynth.dll) cannot collide with it. The
+# loader finds the bundled DLL through the libs directory that .onLoad puts on
+# PATH.
+PKG_CPPFLAGS = -I.
+PKG_LIBS = -L. -l:wickra_synth.dll

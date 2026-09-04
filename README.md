@@ -45,6 +45,15 @@ ABI and WASM unchanged. The core is exposed as a **JSON-over-C-ABI data API**
 (`Synth::command_json`) in **Rust, Python, Node.js, WASM, C, C++, C#, Go, Java
 and R**, so a developer in any language draws the same synthetic market.
 
+```bash
+cargo install wickra-synth
+wickra-synth --seed 42 --bars 20 --format json
+```
+
+Twenty bars of OHLCV, an order book, trades and funding, from nothing but the
+number 42 — and the same twenty bars on every platform and in every one of
+the ten languages below.
+
 ## Status
 
 Early development (0.1.0, unreleased). The core, the reference CLI, the
@@ -80,21 +89,126 @@ print(len(out["candles"]))  # 20
 Runnable examples for all ten languages — each printing the same first three
 candles — live in [`examples/`](examples/).
 
-## Building from source
+## Requirements
+
+The core needs nothing but a Rust toolchain — no system libraries, no BLAS, no
+Python at build time. Each binding adds only its own runtime:
+
+| Reach | Floor | Where it is declared |
+|-------|-------|----------------------|
+| Rust (workspace) | 1.86 | `Cargo.toml`, `rust-version` |
+| Rust (Node binding build) | 1.88 | `bindings/node/Cargo.toml` — napi-build needs it |
+| Python | 3.9 | `bindings/python/pyproject.toml`, `requires-python` (abi3) |
+| Node.js | 22 | `bindings/node/package.json`, `engines.node` |
+| .NET | 8.0 | `bindings/csharp/WickraSynth/WickraSynth.csproj` |
+| Go | 1.23 | `bindings/go/go.mod` |
+| Java | 22 | `bindings/java/pom.xml` — the Foreign Function & Memory API |
+| R | 4.1 | `bindings/r/DESCRIPTION`, `Depends` |
+
+`scripts/check_version_sync.py` holds these numbers against the manifests, so a
+floor that moves in one place and not the other is a failing check rather than a
+support question.
+
+## Benchmarks
+
+Per-generation throughput is tracked in [BENCHMARKS.md](BENCHMARKS.md) and
+measured by the `synth-bench` crate (`cargo bench -p synth-bench`). A shallow
+book with light trade flow generates roughly 4.3 million candles per second; the
+microstructure, not the price walk, is what the time goes on.
+
+## Project layout
+
+```
+crates/synth-core     the engine: GenSpec, the PRNG, the walk, the microstructure
+crates/synth-cli      wickra-synth, the reference consumer
+crates/synth-bench    criterion benchmarks
+bindings/c            the C ABI hub (cdylib + staticlib) plus the C++ hull
+bindings/python       PyO3 / maturin, abi3-py39
+bindings/node         napi-rs, per-platform npm packages
+bindings/wasm         wasm-bindgen
+bindings/csharp       P/Invoke over the hub
+bindings/go           cgo over the hub
+bindings/java         Foreign Function & Memory API over the hub
+bindings/r            .Call glue over the hub
+golden/               specs + blessed outputs, the cross-language contract
+examples/             one runnable example per language
+fuzz/                 cargo-fuzz targets for parse, generate, PRNG and FFI
+docs/                 the deep dives; see docs/README.md
+```
+
+Six of the ten reaches go through one C ABI (`bindings/c`), which is why there
+is exactly one place a marshalling bug can live rather than six.
+
+## Building everything from source
+
+The core and the CLI need only cargo:
 
 ```bash
 cargo build --workspace
 cargo test  --workspace
 ```
 
-## Requirements
+The bindings each need their own toolchain, and the six that go through the C
+ABI need it built first:
 
-- Rust 1.86+ (MSRV); the Node binding needs Rust 1.88+.
+```bash
+cargo build --release -p wickra-synth-c          # the hub the six link against
 
-## Benchmarks
+cd bindings/python && maturin develop --release  # Python
+cd bindings/node   && npm install && npx napi build --platform --release
+cd bindings/wasm   && wasm-pack build --target nodejs
+dotnet build bindings/csharp/WickraSynth -c Release
+mvn -f bindings/java package
+R CMD INSTALL bindings/r                         # WKSYNTH_INC/WKSYNTH_LIB, see below
+cmake -S examples/c -B examples/c/build && cmake --build examples/c/build
+```
 
-Per-generation throughput is tracked in [BENCHMARKS.md](BENCHMARKS.md) and
-measured by the `synth-bench` crate (`cargo bench -p synth-bench`).
+The R binding downloads a matching prebuilt C ABI by default. To build it
+against the one in your tree instead, set `WKSYNTH_INC` to
+`bindings/c/include` and `WKSYNTH_LIB` to `target/release`.
+
+## Testing
+
+```bash
+cargo test --workspace --all-features
+cargo test --workspace --no-default-features
+```
+
+Beyond the unit tests, four suites are worth knowing about:
+
+- **Golden** — every binding replays `golden/specs` and must reproduce
+  `golden/expected` byte for byte. That is the cross-language guarantee, and it
+  is checked in all ten reaches, not asserted in the README.
+- **RNG vectors** — fixed SplitMix64 and xoshiro256++ reference values. If
+  these move, every seed in the world moves with them.
+- **Stream equals batch** — the reassembled event stream equals the batch
+  output, so the two paths cannot drift apart.
+- **Property tests** — random specs stay finite and well formed, and the same
+  seed gives the same bytes.
+
+Per-binding commands are in [CONTRIBUTING.md](CONTRIBUTING.md); the
+`scripts/check_*.py` family holds the version, licence, link and binding-surface
+invariants that no compiler checks.
+
+## Ecosystem
+
+Wickra Synth is one repository in a family that shares a core and a
+ten-language binding surface:
+
+- [**wickra**](https://github.com/wickra-lib/wickra) — 514 streaming
+  indicators, the core everything else is built on.
+- [**wickra-backtest**](https://github.com/wickra-lib/wickra-backtest) — a
+  streaming-native backtester where backtest and live are the same code path.
+- [**wickra-screener**](https://github.com/wickra-lib/wickra-screener) — scan
+  thousands of symbols against data-driven conditions.
+- [**wickra-exchange**](https://github.com/wickra-lib/wickra-exchange) — one
+  typed API over the ten largest crypto exchanges.
+- [**wickra-terminal**](https://github.com/wickra-lib/wickra-terminal) — a
+  streaming trading terminal over the same core.
+
+Synth is the one that needs no market data at all: it is where the others get a
+reproducible market to test against. The full list is at
+[github.com/wickra-lib](https://github.com/wickra-lib).
 
 ## Contributing
 

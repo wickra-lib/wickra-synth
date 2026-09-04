@@ -4,7 +4,9 @@
   "description": "Native binding for wickra-synth (Windows arm64 MSVC). Installed automatically as an optional dependency of wickra-synth on matching platforms.",
   "main": "wickra-synth.win32-arm64-msvc.node",
   "files": [
-    "wickra-synth.win32-arm64-msvc.node"
+    "wickra-synth.win32-arm64-msvc.node",
+    "LICENSE-MIT",
+    "LICENSE-APACHE"
   ],
   "license": "MIT OR Apache-2.0",
   "engines": {

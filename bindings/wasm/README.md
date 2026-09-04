@@ -62,5 +62,5 @@ golden invariant. The response bytes match every other binding for a given seed.
 
 ## License
 
-Dual-licensed under either [MIT](../../LICENSE-MIT) or
-[Apache-2.0](../../LICENSE-APACHE), at your option.
+Dual-licensed under either [MIT](https://github.com/wickra-lib/wickra-synth/blob/main/LICENSE-MIT) or
+[Apache-2.0](https://github.com/wickra-lib/wickra-synth/blob/main/LICENSE-APACHE), at your option.
