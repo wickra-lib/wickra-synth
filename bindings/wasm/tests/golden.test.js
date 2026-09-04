@@ -7,6 +7,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert");
 const path = require("node:path");
+const fs = require("node:fs");
 
 let wasm = null;
 try {
@@ -65,5 +66,28 @@ if (wasm) {
     const out = JSON.parse(new wasm.Synth(SPEC).command('{"cmd":"nope"}'));
     assert.strictEqual(out.ok, false);
     assert.match(out.error, /unknown cmd/);
+  });
+}
+
+// The corpus lives at the repository root; bindings/wasm/tests is three levels
+// down. Comparing against the committed bless (not just against a second call)
+// is what makes this a cross-language check.
+const GOLDEN = path.resolve(__dirname, "..", "..", "..", "golden");
+
+if (wasm) {
+  test("wasm matches the committed golden corpus byte-for-byte", () => {
+    const specs = fs
+      .readdirSync(path.join(GOLDEN, "specs"))
+      .filter((f) => f.endsWith(".json"))
+      .sort();
+    assert.ok(specs.length > 0, "no golden fixtures found");
+    for (const specFile of specs) {
+      const spec = fs.readFileSync(path.join(GOLDEN, "specs", specFile), "utf8");
+      const expected = fs
+        .readFileSync(path.join(GOLDEN, "expected", specFile), "utf8")
+        .trim();
+      const got = new wasm.Synth(spec).command(generateCmd());
+      assert.strictEqual(got, expected, `${specFile} must be byte-identical to the Rust golden`);
+    }
   });
 }
