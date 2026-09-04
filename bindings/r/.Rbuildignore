@@ -1,0 +1,10 @@
+^src/wickra_synth\.h$
+^src/wickra_synth\.dll$
+^src/libwickra_synth\.(so|dylib)$
+^src/wickrasynth\.(dll|so)$
+^src/.*\.o$
+^src/symbols\.rds$
+^src/wickra-synth-c\.tar\.gz$
+^src/wickra-synth-c$
+^src/Makevars$
+^\.gitignore$
