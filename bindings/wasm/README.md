@@ -51,7 +51,7 @@ JSON), not thrown.
 
 ## Determinism
 
-The generator runs single-threaded in the browser sandbox (no rayon thread
+The generator runs single-threaded in the browser sandbox (no worker thread
 pool), which is byte-identical to the native run — the exact cross-language
 golden invariant. The response bytes match every other binding for a given seed.
 

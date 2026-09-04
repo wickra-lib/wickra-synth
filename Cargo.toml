@@ -34,21 +34,17 @@ categories = ["finance", "simulation", "command-line-utilities"]
 # Wickra ecosystem. wickra-data supplies the canonical `Candle` output shape;
 # wickra-core is optional (the `validate` feature runs the 514 indicators over a
 # generated stream as a sanity check). Both ship on crates.io — no git deps.
-wickra-data = "0.9"
-wickra-core = "0.9"
+wickra-data = "1.0"
+wickra-core = "1.0"
 # Workspace-internal crate, referenced by the CLI, bench and bindings.
-# Serial by default (v1 is single-symbol); consumers that want data-parallel
-# generation opt in with `features = ["parallel"]`.
+# The generator is sequential by construction: every draw comes from one PRNG
+# stream in a fixed order, so bar N cannot be produced before bar N-1.
 synth-core = { version = "0.1.0", path = "crates/synth-core", default-features = false }
 # Serialization — the data-driven boundary (spec/command/output as JSON).
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "1"
-# Exact decimal arithmetic where price/qty precision matters.
-rust_decimal = { version = "1", features = ["serde"] }
 thiserror = "2"
-# Data-parallel generation across independent seeds/paths.
-rayon = "1"
 clap = { version = "4", features = ["derive"] }
 # C ABI header generation.
 cbindgen = "0.27"

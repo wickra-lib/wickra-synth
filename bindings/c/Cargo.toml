@@ -38,6 +38,6 @@ cast_possible_wrap = "allow"
 similar_names = "allow"
 
 [dependencies]
-# The core (serial by default at the workspace level; no rayon or `validate`
-# across the JSON-over-C-ABI boundary).
+# The core. The `validate` feature is deliberately off across the
+# JSON-over-C-ABI boundary — the hub forwards, it does not second-guess.
 synth-core = { workspace = true }

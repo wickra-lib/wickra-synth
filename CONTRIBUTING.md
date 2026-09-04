@@ -25,13 +25,13 @@ Every change runs green locally before a commit:
 ```bash
 cargo fmt --all
 cargo test --workspace --all-features
-cargo test --workspace --no-default-features   # sequential path == parallel path
+cargo test --workspace --no-default-features   # the core without the validate oracle
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo deny check
 ```
 
 `cargo fmt --all` and the `clippy -D warnings` gate are enforced in CI on three
-operating systems, across both the default (rayon `parallel`) and
+operating systems, across both the default and
 `--no-default-features` (sequential / WASM) feature sets — a generation must
 produce byte-identical output either way.
 
