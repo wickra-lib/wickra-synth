@@ -7,7 +7,7 @@
 ## Checklist
 
 - [ ] `cargo fmt --all` and `cargo clippy --workspace --all-targets --all-features -- -D warnings` are clean
-- [ ] `cargo test --workspace --all-features` and `--no-default-features` pass (parallel == sequential)
+- [ ] `cargo test --workspace --all-features` and `--no-default-features` pass
 - [ ] `cargo deny check` is clean
 - [ ] Tests added/updated (prefer hand-computed expectations for core changes)
 - [ ] The spec stays data (a serde `GenSpec`), never Rust closures; all randomness stays in the core PRNG

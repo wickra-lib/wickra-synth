@@ -1,8 +1,8 @@
 """Cross-language golden: every binding must produce byte-identical output JSON.
 
 The fixtures live in the repository-root ``golden/`` directory (specs + expected
-responses). They are added in a later phase (P-SYN-4); until then this test
-skips cleanly.
+responses), blessed from ``synth-core::generate``. This binding must reproduce
+them byte-for-byte.
 """
 
 import json

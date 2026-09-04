@@ -21,9 +21,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 toml = { workspace = true }
 thiserror = { workspace = true }
-# Optional data-parallel generation (single-symbol v1 is serial; the substream
-# mechanism in `rng` is what keeps a future parallel path deterministic).
-rayon = { workspace = true, optional = true }
 # Optional sanity oracle: run the wickra-core indicators over a generated stream
 # to assert it stays finite and in range.
 wickra-core = { workspace = true, optional = true }
@@ -33,8 +30,9 @@ proptest = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-default = ["parallel"]
-parallel = ["dep:rayon"]
+# No default features. Generation is sequential by construction -- one PRNG
+# stream, one fixed draw order — so there is no parallel engine to switch on,
+# and every consumer (native, WASM, fuzz) builds the same code path.
 validate = ["dep:wickra-core"]
 
 [lints]

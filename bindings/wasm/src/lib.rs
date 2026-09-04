@@ -6,7 +6,7 @@
 //! command protocol crosses every binding, so a browser front-end runs against
 //! the exact same core as the native CLI.
 //!
-//! The generator runs single-threaded here (no rayon thread pool in a browser
+//! The generator runs single-threaded here (no worker thread pool in a browser
 //! sandbox), which is byte-identical to the native run — the exact
 //! cross-language golden check.
 

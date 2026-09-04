@@ -26,8 +26,8 @@ workspace = true
 [dependencies]
 # The synth core as a direct path dep (not `workspace = true`) so
 # `default-features = false` is honored — cargo silently ignores it on an
-# inherited workspace dependency. Default features off means no rayon (the
-# generator is single-threaded here), so a wasm build is byte-identical to the
-# native one — the exact cross-language golden check.
+# inherited workspace dependency. The core declares no default features, so the
+# wasm build runs the same code as the native one — the exact cross-language
+# golden check.
 synth-core = { path = "../../crates/synth-core", version = "0.1.0", default-features = false }
 wasm-bindgen = "0.2"

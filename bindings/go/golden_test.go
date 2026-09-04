@@ -8,6 +8,9 @@ package wickra
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -85,5 +88,45 @@ func TestStreamCandlesMatchBatch(t *testing.T) {
 		if string(streamedCandles[i]) != string(batch.Candles[i]) {
 			t.Fatalf("candle %d differs:\n stream: %s\n batch:  %s", i, streamedCandles[i], batch.Candles[i])
 		}
+	}
+}
+
+// goldenDir is the repository-root corpus, relative to bindings/go. The
+// published module mirror ships without the tests, so an absent corpus is a
+// skip, not a failure.
+const goldenDir = "../../golden"
+
+func TestGoldenCorpusIsByteIdentical(t *testing.T) {
+	specs, err := filepath.Glob(filepath.Join(goldenDir, "specs", "*.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(specs) == 0 {
+		t.Skip("golden fixtures not present")
+	}
+	for _, specPath := range specs {
+		name := strings.TrimSuffix(filepath.Base(specPath), ".json")
+		t.Run(name, func(t *testing.T) {
+			specJSON, err := os.ReadFile(specPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected, err := os.ReadFile(filepath.Join(goldenDir, "expected", name+".json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			s, err := New(string(specJSON))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer s.Close()
+			got, err := s.Command(generateCmd())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != strings.TrimSpace(string(expected)) {
+				t.Fatalf("%s: output is not byte-identical to the golden fixture", name)
+			}
+		})
 	}
 }

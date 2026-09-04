@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `rng_stream`, and `command_json` — the parse/generate/PRNG/FFI surfaces must
   never panic on arbitrary input.
 - `synth-bench`: Criterion benchmarks for `generate` scaling by bar count, book
-  depth and trade rate, on the parallel and single-threaded engines.
+  depth and trade rate, plus JSON serialization.
 - `GenSpec`/`Regime`/`Microstructure`/`FundingSpec` now reject unknown fields
   (`deny_unknown_fields`) so a typo'd spec is an error, not silently ignored.
 - `golden/`: the cross-language golden corpus — five `specs/*.json` (trend,
@@ -95,5 +95,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lint configuration (`clippy.toml`), `repo-metadata.toml`, governance docs, the
   `.github` tree (issue/PR templates, `setup-rust`, `sync-metadata.py`,
   dependabot), and dual `MIT OR Apache-2.0` licensing.
+- `bindings/c/include/wickra_synth.hpp`: an optional header-only C++ hull over
+  the C ABI — a move-only RAII `wickra::synth::Synth` that owns the handle and
+  runs the two-call length protocol, returning the response unmodified.
+- `examples/wasm/gen.mjs`: the WebAssembly example, so all ten reaches have a
+  runnable one. The `examples/` table listed nine.
+- Golden-corpus parity in every binding. Go, C#, Java, R, WebAssembly and the
+  C / C++ examples now replay all of `golden/specs` and assert the response is
+  byte-for-byte `golden/expected`. Until now only Python and Node compared
+  against the committed corpus; the other six compared one call against a second
+  call in the same process, which is true of any pure function and proves
+  nothing about parity with the other nine languages. `examples/c` gains
+  `golden_test.c` and `golden_test.cpp`, registered as ctest targets, with the
+  fixture list derived from the corpus at configure time so a new spec is picked
+  up without editing C.
+
+### Changed
+
+- `wickra-core` / `wickra-data` move from `0.9` to `1.0`, the published line.
+
+### Removed
+
+- The `parallel` feature and the rayon dependency. `synth-core` declared
+  `default = ["parallel"]` and pulled in rayon, but no code path ever used it:
+  generation is sequential by construction — one PRNG stream, one fixed draw
+  order — so bar N cannot be produced before bar N-1. The feature compiled rayon
+  into every default build, and the bench crate documented a "parallel engine"
+  and a "single-threaded path" that were the same code. `synth-core` now
+  declares no default features; `validate` is unchanged.
+- The unused `rust_decimal` workspace dependency. Prices and quantities are
+  `f64` rounded through `round_to`; nothing in the workspace used the crate.
+
+### Fixed
+
+- The first recipe in `docs/Cookbook.md` passed `--regime`, which the CLI does
+  not accept — the flag is `--kind`. The documented command exited with
+  `unexpected argument`.
+- The ecosystem paragraph in `README.md` was pasted twice, the second copy
+  truncated to a sentence fragment.
+- `BENCHMARKS.md` reported generation times three to five times slower than the
+  bench measures. The table is re-measured, and now names the machine.
 
 [Unreleased]: https://github.com/wickra-lib/wickra-synth/commits/main

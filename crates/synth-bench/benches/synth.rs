@@ -1,8 +1,8 @@
 //! Criterion benchmarks for `synth-core::generate`.
 //!
-//! The default build measures the parallel engine; `--no-default-features`
-//! measures the single-threaded path (what WASM and the golden fixtures use).
-//! Vary bar count, book depth and trade rate to see how each dimension scales.
+//! Generation is sequential by construction, so there is one engine and one
+//! measurement. Vary bar count, book depth and trade rate to see how each
+//! dimension scales.
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use synth_core::{generate, FundingSpec, GenSpec, Microstructure, Regime, RegimeKind};

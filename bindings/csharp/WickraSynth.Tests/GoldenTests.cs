@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Wickra.Synth;
@@ -43,6 +44,43 @@ public class GoldenTests
         for (int i = 0; i < batchCandles.Count; i++)
         {
             Assert.Equal(batchCandles[i]!.ToJsonString(), streamedCandles[i]);
+        }
+    }
+
+    // The corpus is found by walking up from the test assembly rather than by a
+    // fixed relative path: xUnit runs from bin/<config>/<tfm>, and that depth
+    // changes with the target framework.
+    private static string? FindGoldenDir()
+    {
+        DirectoryInfo? dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            string candidate = Path.Combine(dir.FullName, "golden", "specs");
+            if (Directory.Exists(candidate))
+            {
+                return Path.Combine(dir.FullName, "golden");
+            }
+            dir = dir.Parent;
+        }
+        return null;
+    }
+
+    [Fact]
+    public void GoldenCorpus_IsByteIdentical()
+    {
+        string? golden = FindGoldenDir();
+        Assert.NotNull(golden);
+
+        string[] specs = Directory.GetFiles(Path.Combine(golden!, "specs"), "*.json");
+        Array.Sort(specs);
+        Assert.NotEmpty(specs);
+
+        foreach (string specPath in specs)
+        {
+            string name = Path.GetFileNameWithoutExtension(specPath);
+            string expected = File.ReadAllText(Path.Combine(golden!, "expected", name + ".json")).Trim();
+            using var synth = new Synth(File.ReadAllText(specPath));
+            Assert.Equal(expected, synth.Command(SynthTests.GenerateCmd()));
         }
     }
 }

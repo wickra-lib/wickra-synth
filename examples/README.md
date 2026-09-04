@@ -25,6 +25,7 @@ blessed cross-language golden corpus lives in [`../golden/`](../golden).
 | C# | [`csharp/Gen/`](csharp/Gen/) | `dotnet run --project examples/csharp/Gen` |
 | Java | [`java/Gen.java`](java/Gen.java) | see the header comment |
 | R | [`r/gen.R`](r/gen.R) | `Rscript examples/r/gen.R` |
+| WebAssembly | [`wasm/gen.mjs`](wasm/gen.mjs) | see below |
 
 The native bindings (Python, Node.js) load their own compiled library. The
 bindings that go through the C ABI (Go, C#, Java, R, and the C/C++ example
@@ -48,6 +49,20 @@ ctest --test-dir examples/c/build -C Release --output-on-failure
 On Windows the build copies `wickra_synth.dll` next to each executable, since
 there is no rpath.
 
+The `golden_test` and `golden_testpp` targets are not demos: they replay the
+whole [`../golden`](../golden) corpus through the C ABI and the C++ hull and
+fail if a single byte moves.
+
+## WebAssembly
+
+The wasm example runs the browser build under Node, so build the package for the
+`nodejs` target first:
+
+```bash
+cd bindings/wasm && wasm-pack build --target nodejs
+node examples/wasm/gen.mjs
+```
+
 ## Expected output
 
 Every example prints the version, the bar count, and the first three candles.
@@ -66,3 +81,9 @@ The C, C++, Go, C#, Java, and R examples print the full `generate` response
 (candles plus the book, trade, and funding streams) rather than slicing the
 first three candles, but the candle values are the same — that is what the
 golden corpus pins.
+
+Two examples re-serialize the parsed JSON before printing it, so their text
+differs from the block above in formatting, not in value: JavaScript renders
+`100.0` as `100`, so the Node and WebAssembly examples print `"open":100`. The
+guarantee is on the bytes the core returns, which is what every binding's golden
+test compares — not on how each language's printer formats a float.

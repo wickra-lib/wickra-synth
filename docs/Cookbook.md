@@ -6,7 +6,7 @@ same bytes in every language.
 ## Generate a trending market (CLI)
 
 ```bash
-wickra-synth --seed 42 --bars 20 --regime trend --drift 0.002 --vol 0.01 --format json
+wickra-synth --seed 42 --bars 20 --kind trend --drift 0.002 --vol 0.01 --format json
 ```
 
 `--format text` prints a human summary (bar count, book snapshots, trades)

@@ -1,9 +1,8 @@
 "use strict";
 
 // The cross-language golden invariant seen from Node: the same command yields
-// byte-identical output across calls, and — once the P-SYN-4 fixtures land — the
-// blessed golden re-matches byte-for-byte. The response bytes are what every
-// other binding produces too.
+// byte-identical output across calls, and the blessed golden corpus re-matches
+// byte-for-byte. The response bytes are what every other binding produces too.
 
 const { test } = require("node:test");
 const assert = require("node:assert");
