@@ -161,6 +161,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependabot entries for the fuzz crate (a detached workspace the root `cargo`
   entry never reached) and the Go example module.
 
+- A `gate` job in `release.yml`. Everything that builds or publishes hangs off
+  it, and it refuses two things: a run that is not a `v*` tag push (a
+  `workflow_dispatch` from any branch would otherwise publish that branch to six
+  registries) and a tag whose name disagrees with the workspace version.
+- Provenance attestations for the NuGet package, the Maven jar and the C ABI
+  tarballs. Only crates, wheels and the sdist were covered, and the C ABI is the
+  binary six of the ten reaches load at run time.
+- A `release` profile in `bindings/java/pom.xml` — sources jar, javadoc jar,
+  GPG signing and the Central publishing plugin with `waitUntil=published`, so a
+  green job means published rather than accepted — plus the `<scm>` and
+  `<developers>` blocks Central validates for.
+
 ### Changed
 
 - Every workflow job has a `timeout-minutes`. Nineteen had none and inherited
@@ -198,6 +210,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `release.yml` waited for six of its nine publishers before creating the
+  GitHub release, so a failed NuGet, Maven or Go-mirror job stopped exactly one
+  registry while the other five shipped and the release went out
+  half-published.
+- `java-publish` deployed to Maven Central and kept nothing, so the release page
+  listed a wheel, a crate, a `.node` and a `.nupkg`, and no jar.
+- `go-mirror` copied the Go tests into the published module. They read
+  `../../golden`, a path that exists in this repository and nowhere in the
+  module a consumer downloads, so `go test ./...` against `wickra-synth-go` fails
+  on something that was never going to be there. It also never compiled the
+  assembled tree, although the step rewrites the module path in every file with
+  `sed`.
+- The npm platform packages are assembled at publish time and their manifests
+  list `LICENSE-MIT` and `LICENSE-APACHE` in `files`, but nothing staged the
+  texts into those directories, so npm would have packed neither.
+- `mvn -Prelease deploy` matched no profile: Maven warns and deploys a bare jar
+  with no sources, no javadoc, no signatures and no publishing plugin, all four
+  of which Central rejects. The pom also declared one `<license>` naming the
+  SPDX expression instead of the two licences.
 - `examples/go/go.mod` required `.../bindings/go v0.0.0` with no `replace`
   directive — a version no module proxy can resolve, for a module that lives
   in this repository. `go build .` failed with "missing go.sum entry" and
