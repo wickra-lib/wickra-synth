@@ -65,8 +65,8 @@ node examples/wasm/gen.mjs
 
 ## Expected output
 
-Every example prints the version, the bar count, and the first three candles.
-The candles are identical across all ten languages:
+Six of the ten — Rust, Python, Node.js, WebAssembly, Go and C# — print the
+version, the bar count, and the first three candles:
 
 ```text
 wickra-synth 0.1.0
@@ -77,10 +77,13 @@ first 3 candles:
   {"ts":1700007200,"open":101.73596671,"high":102.46794824,"low":101.14606306,"close":101.87380028,"volume":918.90818804}
 ```
 
-The C, C++, Go, C#, Java, and R examples print the full `generate` response
-(candles plus the book, trade, and funding streams) rather than slicing the
-first three candles, but the candle values are the same — that is what the
-golden corpus pins.
+The other four — C, C++, Java and R — print the full `generate` response
+(candles plus the book, trade and funding streams) instead. Slicing three
+candles out of it needs a JSON parser, and none of those four has one as a
+dependency; showing the raw response is the honest thing for a language whose
+consumer will be parsing it themselves anyway. The candle values are the same,
+and that is what the golden corpus pins — in all ten reaches, not in the six
+that happen to print a summary.
 
 Two examples re-serialize the parsed JSON before printing it, so their text
 differs from the block above in formatting, not in value: JavaScript renders

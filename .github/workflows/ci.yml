@@ -397,7 +397,11 @@ jobs:
           export WKSYNTH_INC="${WKSYNTH_INC//\\//}"
           export WKSYNTH_LIB="${WKSYNTH_LIB//\\//}"
           if command -v cygpath >/dev/null 2>&1; then
-            export PATH="$(cygpath -u "$WKSYNTH_LIB"):$PATH"
+            # Assigned separately: inside `export` the command substitution's
+            # exit status is masked, so a cygpath that failed would leave an
+            # empty entry on PATH and surface later as a missing library.
+            lib_unix=$(cygpath -u "$WKSYNTH_LIB")
+            export PATH="$lib_unix:$PATH"
           else
             export LD_LIBRARY_PATH="$WKSYNTH_LIB:$LD_LIBRARY_PATH"
             export DYLD_LIBRARY_PATH="$WKSYNTH_LIB:$DYLD_LIBRARY_PATH"
@@ -655,12 +659,14 @@ jobs:
 
       - name: Node.js
         run: |
+          set -euo pipefail
           cd bindings/node
           npm install --no-audit --no-fund
           npx napi build --platform --release
+          # The example depends on the binding by path, so this links the addon
+          # just built rather than reaching for the registry.
           cd ../../examples/node
           npm install --no-audit --no-fund
-          npm install --no-save ../../bindings/node
           node gen.js
 
       - name: WebAssembly

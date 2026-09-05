@@ -5,5 +5,5 @@
   "description": "A runnable Node.js example for wickra-synth.",
   "type": "commonjs",
   "scripts": { "start": "node gen.js" },
-  "dependencies": { "wickra-synth": "^0.1.0" }
+  "dependencies": { "wickra-synth": "file:../../bindings/node" }
 }

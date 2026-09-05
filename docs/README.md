@@ -24,9 +24,11 @@ request as the code, never after it.
   [docs.rs/synth-core](https://docs.rs/synth-core).
 - **Runnable code** lives in [`../examples/`](../examples/), one per language,
   all printing the same three candles from seed 42.
-- **The project page** is [synth.wickra.org](https://synth.wickra.org), built
-  from the separate `wickra-synth-site` repository. Open a pull request there
-  for anything that belongs on the website rather than beside the code.
+- **The project page** is built from the separate
+  [wickra-synth-site](https://github.com/wickra-lib/wickra-synth-site)
+  repository. It is not deployed yet, so there is no URL to link; open a pull
+  request there for anything that belongs on a website rather than beside the
+  code.
 
 Keeping this file short is deliberate. Without it, a reader opening `docs/` has
 no way to tell which pages are contracts and which are prose, and a second
