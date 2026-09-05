@@ -19,3 +19,14 @@
 paths-ignore:
   - bindings/node/index.js
   - bindings/node/index.d.ts
+  # And the Rust side of the same generator. napi-derive expands every
+  # `#[napi]` into FFI glue that dereferences raw `napi_env` and `napi_value`
+  # handles, and CodeQL attributes generated code back to the source span of
+  # the macro -- so the finding lands on the struct identifier rather than on
+  # any pointer expression, one per exported class, and a new class adds
+  # another. `query-filters` matches on query id, tags and severity and
+  # cannot be scoped to a path, so excluding the rule that way would also
+  # disable it for bindings/c/src, which is where this workspace's real
+  # raw-pointer code lives. Dropping this one file keeps the rule active
+  # everywhere it can say something useful.
+  - bindings/node/src/lib.rs

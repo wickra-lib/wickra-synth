@@ -228,6 +228,23 @@ jobs:
         run: cd bindings/node && git diff --exit-code -- index.js index.d.ts
       - name: Run Node tests
         run: cd bindings/node && node --test
+      # `files` promises the compiled addon; nothing held that promise, so
+      # a tarball that stopped carrying it would publish and only fail at
+      # `require` time on a consumer's machine.
+      - name: The packed tarball carries the native addon
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd bindings/node
+          packed=$(npm pack --dry-run --json)
+          echo "$packed" | grep -q '\.node' || {
+            echo '::error::npm pack produced no .node file, but package.json lists one in `files`'
+            exit 1
+          }
+          echo "$packed" | grep -q 'LICENSE-MIT' || {
+            echo '::error::npm pack produced no LICENSE-MIT'
+            exit 1
+          }
 
   wasm:
     name: WASM
@@ -408,6 +425,10 @@ jobs:
           fi
           R CMD INSTALL bindings/r
           Rscript bindings/r/tests/run_tests.R
+          # The corpus check lives outside tests/ because it reads golden/,
+          # which is in the repository and in no tarball. Run from the root,
+          # where that directory simply exists.
+          Rscript bindings/r/golden_test.R
 
   coverage:
     name: Coverage
@@ -703,6 +724,7 @@ jobs:
           export LD_LIBRARY_PATH="$WKSYNTH_LIB:${LD_LIBRARY_PATH:-}"
           R CMD INSTALL bindings/r
           Rscript examples/r/gen.R
+          Rscript bindings/r/golden_test.R
 
   # The Linux wheels are built inside manylinux and musllinux containers, which
   # are older and thinner than the runner. CI is otherwise blind to that: every

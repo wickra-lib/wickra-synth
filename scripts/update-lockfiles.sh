@@ -39,13 +39,13 @@ echo "==> Python (.github/requirements/ci-dev.txt via uv)"
 # the machine of everyone who regenerates a lockfile. Set WKSYNTH_BOOTSTRAP_UV=1
 # to opt in; the bootstrap then fetches one pinned release archive and refuses to
 # use it unless its checksum matches the one recorded here.
-UV_VERSION="0.12.7"
+UV_VERSION="0.12.10"
 uv_sha256() {
   case "$1" in
-    x86_64-unknown-linux-gnu)  echo "788f18abea7c5f55d6216e4f5613fd89d4d59b631efeec117b2b07fe72f1da21" ;;
-    aarch64-unknown-linux-gnu) echo "66393193038dd7eb108abd7a218d9cec04ac70ab98242b0720fa94de19223b7c" ;;
-    aarch64-apple-darwin)      echo "127ebdda7ad953cdf198e964b570ea5771b85467ea93eb7cb6d6f8e6f55408f3" ;;
-    x86_64-apple-darwin)       echo "06b8ae1da8c2661c5434507a66f8c2b0b835933bf955b5958a9ac357a37d1959" ;;
+    x86_64-unknown-linux-gnu)  echo "173d95a0c32d18c896c46ba6fafbf3cf9c14ab74b033f81b76c883ef492a976b" ;;
+    aarch64-unknown-linux-gnu) echo "9ff6b9d4665edcdd3a88dcc73cd1eb641754deb927f14e8c62ebfde6bf4f5f5e" ;;
+    aarch64-apple-darwin)      echo "51c6170e8e3a01cef9f33b94f582b7b81ac65046f55d40afb35f9cff5a68c179" ;;
+    x86_64-apple-darwin)       echo "5296d5aa2b9143360405eea866f8ef4d5dc8986b164eb0dc35e8f876a9304d30" ;;
     *)                         echo "" ;;
   esac
 }

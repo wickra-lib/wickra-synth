@@ -41,8 +41,13 @@ jobs:
   # --------------------------------------------------------------------------
   gate:
     name: Gate (tag and version agree)
-    timeout-minutes: 10
+    # Above the twenty-minute wait for CI, with room for the checkout and the
+    # two checks around it.
+    timeout-minutes: 30
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read # read the check runs on the tagged commit
     outputs:
       version: ${{ steps.check.outputs.version }}
     steps:
@@ -84,6 +89,51 @@ jobs:
       # rather than between two of them.
       - name: Every version declaration agrees with the tag
         run: python3 scripts/check_version_sync.py
+
+      # And CI has to have passed on this exact commit. ci.yml does not run on
+      # tags, so the runs being read are the ones from the commit's life on main
+      # -- which is the point: the tag names a commit, and the question is
+      # whether that commit is green.
+      #
+      # The distinction that matters is "not decided yet" against "decided
+      # against". Treating a still-running check as a failure refuses correct
+      # tags, so this waits, up to twenty minutes, and only then gives up -- and
+      # says it gave up on time rather than on a result. A commit with no checks
+      # at all is also refused: nothing to read is not the same as nothing wrong.
+      - name: CI is green on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          deadline=$(( $(date +%s) + 20 * 60 ))
+          while :; do
+            states=$(gh api "repos/$REPO/commits/$SHA/check-runs" --paginate \
+                       -q '.check_runs[] | select(.name != "Gate (tag and version agree)")
+                           | "\(.status):\(.conclusion)"')
+            if [ -z "$states" ]; then
+              echo "::error::no check runs found for $SHA -- nothing to read is not the same as nothing wrong"
+              exit 1
+            fi
+            pending=$(echo "$states" | grep -cv '^completed:' || true)
+            failed=$(echo "$states" | grep -E '^completed:(failure|timed_out|action_required)' || true)
+            if [ -n "$failed" ]; then
+              echo "::error::CI is not green on $SHA:"
+              echo "$failed"
+              exit 1
+            fi
+            if [ "$pending" -eq 0 ]; then
+              echo "CI is green on $SHA ($(echo "$states" | wc -l) checks)"
+              break
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::gave up waiting: $pending check(s) on $SHA still undecided after 20 minutes"
+              exit 1
+            fi
+            echo "$pending check(s) still running on $SHA; waiting 30s"
+            sleep 30
+          done
 
   # --------------------------------------------------------------------------
   # crates.io: synth-core then the wickra-synth crate (wickra-synth binary)

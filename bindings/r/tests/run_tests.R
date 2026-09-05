@@ -49,43 +49,4 @@ for (candle in candle_objs) {
   stopifnot(grepl(paste0('"candle":', candle), stream, fixed = TRUE))
 }
 
-## the committed golden corpus: every spec must come back byte-for-byte. The
-## corpus is found by walking up from the working directory, because R CMD check
-## runs the tests from a temporary directory rather than the repository root.
-find_golden <- function() {
-  dir <- normalizePath(getwd(), winslash = "/", mustWork = FALSE)
-  repeat {
-    candidate <- file.path(dir, "golden", "specs")
-    if (dir.exists(candidate)) {
-      return(file.path(dir, "golden"))
-    }
-    parent <- dirname(dir)
-    if (identical(parent, dir)) {
-      return(NULL)
-    }
-    dir <- parent
-  }
-}
-
-golden <- find_golden()
-if (is.null(golden)) {
-  cat("golden fixtures not present; skipping the corpus check\n")
-} else {
-  spec_files <- sort(list.files(file.path(golden, "specs"), pattern = "[.]json$",
-                                full.names = TRUE))
-  stopifnot(length(spec_files) > 0)
-  for (spec_path in spec_files) {
-    name <- sub("[.]json$", "", basename(spec_path))
-    expected <- trimws(paste(readLines(file.path(golden, "expected",
-                                                 paste0(name, ".json")),
-                                       warn = FALSE), collapse = "\n"))
-    spec_json <- paste(readLines(spec_path, warn = FALSE), collapse = "\n")
-    got <- wksynth_command(wksynth_new(spec_json), generate_cmd())
-    if (!identical(got, expected)) {
-      stop(sprintf("%s: output is not byte-identical to the golden fixture", name))
-    }
-  }
-  cat(sprintf("all %d golden fixtures match\n", length(spec_files)))
-}
-
 cat("wickra-synth R tests passed\n")
