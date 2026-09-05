@@ -19,6 +19,16 @@
 // A panic was caught at the FFI boundary.
 #define WICKRA_SYNTH_ERR_PANIC -3
 
+// A different command arrived while a measured response was still undelivered.
+//
+// The two-call protocol is measure-then-write for **one** command. Interleaving
+// a second command between the two calls used to drop the cached response
+// silently, so the third call re-executed the first command -- and `set_spec`
+// mutates the handle, so "apply exactly once" was not what happened. Refusing
+// is the honest answer: the caller's next step is to finish the pair, or to
+// pass `out = NULL, cap = 0` again to restart it.
+#define WICKRA_SYNTH_ERR_PENDING -4
+
 // An opaque handle to a synth instance. Created by
 // [`wickra_synth_new`] and destroyed by [`wickra_synth_free`];
 // never dereferenced by the caller.

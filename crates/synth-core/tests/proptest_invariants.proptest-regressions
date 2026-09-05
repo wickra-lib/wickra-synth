@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc c6c59a9685a7dc62d73356c5fc82a5e57f9931c5d616c761f5d7ce7267d5d763 # shrinks to spec = GenSpec { seed: 0, bars: 4, start_price: 1.0, start_ts: 0, bar_secs: 2305843009213693952, regimes: [Regime { kind: Trend, len: 4, drift: 0.0, vol: 0.0 }], microstructure: Microstructure { book_depth: 1, spread_bps: 0.0, trade_rate: 0.0, funding: None } }
+cc 9c2724173957235da4d3a26549fad6a452e13cd58999725629c9cbfe4de6bd99 # shrinks to spec = GenSpec { seed: 0, bars: 1, start_price: 1.0, start_ts: 9223372036853775807, bar_secs: 144115188075855871, regimes: [Regime { kind: Trend, len: 1, drift: 0.0, vol: 0.0 }], microstructure: Microstructure { book_depth: 1, spread_bps: 0.0, trade_rate: 0.0, funding: None } }

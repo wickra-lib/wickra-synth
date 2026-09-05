@@ -12,10 +12,27 @@ libfuzzer-sys = "0.4"
 serde_json = "1"
 # The core under test.
 wickra-synth-core = { path = "../crates/synth-core", default-features = false }
+# The C ABI hub, linked as an rlib so its buffer protocol -- the workspace's only
+# unsafe code -- can actually be driven with arbitrary bytes.
+wickra-synth-c = { path = "../bindings/c" }
 
 # Detach from the parent workspace — cargo-fuzz builds this crate on its own with
 # sanitizer flags on a nightly toolchain.
 [workspace]
+
+[[bin]]
+name = "spec_toml"
+path = "fuzz_targets/spec_toml.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "c_abi_buffer"
+path = "fuzz_targets/c_abi_buffer.rs"
+test = false
+doc = false
+bench = false
 
 [[bin]]
 name = "spec_parse"

@@ -27,13 +27,23 @@ prop_compose! {
         spread_bps in 0.0f64..20.0,
         trade_rate in 0.0f64..15.0,
         with_funding in any::<bool>(),
+        // These two were pinned to 1_700_000_000 and 3600, which is the
+        // one shape the timeline cannot go wrong in. Drawn near the end
+        // of i64 as well, because start_ts + (bars - 1) * bar_secs is
+        // where the overflow lives and no human writes that as a case.
+        start_ts in prop_oneof![
+            0i64..2_000_000_000i64,
+            (i64::MAX - 1_000_000)..=i64::MAX,
+            i64::MIN..=(i64::MIN + 1_000_000),
+        ],
+        bar_secs in prop_oneof![1i64..86_400i64, (i64::MAX / 64)..=i64::MAX],
     ) -> GenSpec {
         GenSpec {
             seed,
             bars,
             start_price,
-            start_ts: 1_700_000_000,
-            bar_secs: 3600,
+            start_ts,
+            bar_secs,
             regimes: vec![Regime { kind, len: bars, drift, vol }],
             microstructure: Microstructure {
                 book_depth,
@@ -54,7 +64,13 @@ proptest! {
 
     #[test]
     fn output_is_well_formed(spec in arb_spec()) {
-        let out = generate(&spec).unwrap();
+        // A drawn timeline can legitimately overflow i64, and `validate` says so
+        // rather than letting the walk run off the end. That is the answer under
+        // test, so a rejected spec is a pass, not a case to skip quietly.
+        let Ok(out) = generate(&spec) else {
+            prop_assert!(spec.validate().is_err(), "generate failed on a valid spec");
+            return Ok(());
+        };
 
         // One candle and one book snapshot per bar.
         prop_assert_eq!(out.candles.len(), spec.bars);
@@ -84,6 +100,17 @@ proptest! {
             prop_assert!(snap.bids[0].price <= snap.asks[0].price, "crossed book");
         }
 
+        // Candle timestamps step forward by exactly bar_secs. Nothing asserted
+        // this, and a timeline that wrapped past i64::MAX produced a last candle
+        // dated before the first -- in release builds, without a word.
+        for w in out.candles.windows(2) {
+            prop_assert_eq!(
+                w[1].ts - w[0].ts, spec.bar_secs,
+                "candle timestamps did not advance by bar_secs"
+            );
+        }
+        prop_assert_eq!(out.candles[0].ts, spec.start_ts, "first candle is not at start_ts");
+
         // Trade seq is a global strictly-increasing counter.
         for w in out.trades.windows(2) {
             prop_assert!(w[1].seq > w[0].seq, "trade seq not strictly increasing");
@@ -93,8 +120,11 @@ proptest! {
 
     #[test]
     fn same_seed_is_byte_identical(spec in arb_spec()) {
-        let a = serde_json::to_string(&generate(&spec).unwrap()).unwrap();
-        let b = serde_json::to_string(&generate(&spec).unwrap()).unwrap();
+        let (Ok(first), Ok(second)) = (generate(&spec), generate(&spec)) else {
+            return Ok(());
+        };
+        let a = serde_json::to_string(&first).unwrap();
+        let b = serde_json::to_string(&second).unwrap();
         prop_assert_eq!(a, b);
     }
 }

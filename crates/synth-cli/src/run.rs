@@ -86,8 +86,11 @@ fn render_batch(out: &GenOutput, format: Format) -> Result<String, String> {
 
 fn render_stream(events: &[Event], format: Format) -> Result<String, String> {
     match format {
-        Format::Json => serde_json::to_string(&serde_json::json!({ "events": events }))
-            .map_err(|e| e.to_string()),
+        // Not `json!({"events": events})`: that round-trips through
+        // serde_json::Value and alphabetizes each event's keys, so the CLI
+        // emitted `{"trade":{…},"type":"trade"}` where every binding emits
+        // `{"type":"trade","trade":{…}}`. The core owns this envelope.
+        Format::Json => wickra_synth_core::stream_json(events).map_err(|e| e.to_string()),
         Format::Csv => Ok(candles_csv(&candles_from_events(events))),
         Format::Text => Ok(stream_summary(events)),
     }
@@ -279,5 +282,50 @@ mod tests {
             assert!((mine.close - theirs.close).abs() < 1e-6);
             assert!((mine.volume - theirs.volume).abs() < 1e-6);
         }
+    }
+
+    /// The CLI is the eleventh consumer of the `generate_stream` envelope, and
+    /// the only one that was building it itself. It emitted
+    /// `{"trade":{…},"type":"trade"}` where the ten bindings emit
+    /// `{"type":"trade","trade":{…}}`, because `json!` round-trips through
+    /// `serde_json::Value` and alphabetizes. `golden/README.md` blesses the corpus
+    /// through this binary, so the divergence was one `--stream` fixture away
+    /// from being baked into what all ten languages are held to.
+    #[test]
+    fn stream_json_matches_the_command_boundary() {
+        let spec_json = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../golden/specs/trend.json"),
+        )
+        .unwrap();
+
+        let mut synth = wickra_synth_core::Synth::new(&spec_json).unwrap();
+        let from_boundary = synth.command_json(r#"{"cmd":"generate_stream"}"#).unwrap();
+
+        let spec = wickra_synth_core::GenSpec::from_json(&spec_json).unwrap();
+        let events = wickra_synth_core::generate_stream(&spec).unwrap();
+        let from_cli = super::render_stream(&events, Format::Json).unwrap();
+
+        assert_eq!(from_cli, from_boundary);
+    }
+
+    /// The same for the batch path, which happens to agree today and has never
+    /// been asserted. `golden/README.md` blesses `expected/*.json` with exactly
+    /// this call, so if it ever stops agreeing the corpus is wrong rather than
+    /// the bindings.
+    #[test]
+    fn batch_json_matches_the_command_boundary() {
+        let spec_json = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../golden/specs/trend.json"),
+        )
+        .unwrap();
+
+        let mut synth = wickra_synth_core::Synth::new(&spec_json).unwrap();
+        let from_boundary = synth.command_json(r#"{"cmd":"generate"}"#).unwrap();
+
+        let spec = wickra_synth_core::GenSpec::from_json(&spec_json).unwrap();
+        let out = wickra_synth_core::generate(&spec).unwrap();
+        let from_cli = super::render_batch(&out, Format::Json).unwrap();
+
+        assert_eq!(from_cli, from_boundary);
     }
 }

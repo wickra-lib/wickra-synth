@@ -113,9 +113,15 @@ impl GenSpec {
 
     /// Validate the spec's invariants.
     ///
+    /// Public because the validation rules *are* the input contract: a caller
+    /// that builds a `GenSpec` in code rather than parsing one has no other way
+    /// to ask whether it is acceptable, and `generate` may assume validity only
+    /// because this is the one place that decides it. `docs/GENSPEC.md` lists
+    /// every rule enforced here.
+    ///
     /// # Errors
     /// Returns [`Error::BadSpec`] describing the first invariant violated.
-    pub(crate) fn validate(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<()> {
         if self.bars == 0 {
             return Err(Error::BadSpec("bars must be > 0".into()));
         }
@@ -165,6 +171,24 @@ impl GenSpec {
                     "funding base_rate and sensitivity must be finite".into(),
                 ));
             }
+        }
+        // The last bar's timestamp has to exist. `generate` walks
+        // `bar_ts += bar_secs` once per bar, and a spec that passed every check
+        // above could still run that off the end of i64: in a debug build it
+        // panics across the FFI boundary, and in release it wraps, so the last
+        // candle carries a timestamp smaller than the first. That breaks the one
+        // invariant this product sells, silently, in the build that ships.
+        //
+        // Checked here rather than in the loop so the loop keeps a plain add:
+        // the engine may assume a validated spec, and a checked add there would
+        // be a branch no input can reach.
+        let span = i64::try_from(self.bars - 1)
+            .ok()
+            .and_then(|n| n.checked_mul(self.bar_secs));
+        if span.and_then(|s| self.start_ts.checked_add(s)).is_none() {
+            return Err(Error::BadSpec(
+                "start_ts + (bars - 1) * bar_secs overflows i64".into(),
+            ));
         }
         Ok(())
     }

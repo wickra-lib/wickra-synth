@@ -17,6 +17,20 @@ struct StreamResponse<'a> {
     events: &'a [Event],
 }
 
+/// Serialize an event list into the exact envelope `command_json` returns for
+/// `generate_stream`.
+///
+/// Public because the CLI is the eleventh consumer of this protocol and had
+/// rebuilt the envelope with the `json!` macro — the one thing the struct above
+/// exists to avoid. Every consumer that emits a stream response calls this, so
+/// there is one place the field order is decided.
+///
+/// # Errors
+/// Propagates a serialization failure, which for these types cannot occur.
+pub fn stream_json(events: &[Event]) -> Result<String> {
+    Ok(serde_json::to_string(&StreamResponse { events })?)
+}
+
 /// A stateful synth handle. Holds an optional current spec; `command_json` is
 /// the single dispatch entry point every language binding calls.
 pub struct Synth {
@@ -110,7 +124,7 @@ impl Synth {
             "generate_stream" => {
                 let spec = self.resolve_spec(&v)?;
                 let events = generate_stream(&spec)?;
-                Ok(serde_json::to_string(&StreamResponse { events: &events })?)
+                stream_json(&events)
             }
             "version" => Ok(format!(r#"{{"version":"{}"}}"#, Self::version())),
             other => Err(Error::BadSpec(format!("unknown cmd: {other}"))),

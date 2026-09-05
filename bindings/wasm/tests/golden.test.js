@@ -28,8 +28,16 @@ function generateCmd() {
   return JSON.stringify({ cmd: "generate" });
 }
 
-test("wasm build present or skipped", (t) => {
-  if (!wasm) t.skip("run `wasm-pack build --target nodejs` first");
+// Asserted, not skipped. Every other test in this file is guarded by
+// `if (wasm)`, so a missing build turned the whole WASM suite into one skipped
+// test and a green check -- and WASM is the one surface that exists only in a
+// build artefact, which is exactly why it has to be checked at run time. ci.yml
+// builds before it runs this; if that ever stops being true, this says so.
+test("the wasm package is built", () => {
+  assert.ok(
+    wasm,
+    "bindings/wasm/pkg is missing -- run `wasm-pack build --target nodejs` first",
+  );
 });
 
 if (wasm) {

@@ -31,13 +31,30 @@ fuzz_target!(|data: &[u8]| {
     let drift = (f64::from(byte(data, 12)) - 128.0) / 5000.0;
     let vol = f64::from(byte(data, 13)) / 5000.0;
     let with_funding = byte(data, 14) & 1 == 1;
+    // The timeline was pinned to 1_700_000_000 / 3600, the one shape it cannot
+    // go wrong in. start_ts + (bars - 1) * bar_secs is where the walk ran off
+    // the end of i64 -- a panic in debug, a wrapped timestamp in release -- so
+    // the fuzzer needs to be able to reach the edge. Drawn full-width; a spec
+    // that overflows is rejected by `validate`, which is the answer under test.
+    let mut ts_bytes = [0u8; 8];
+    for (i, b) in ts_bytes.iter_mut().enumerate() {
+        *b = byte(data, 15 + i);
+    }
+    let start_ts = i64::from_le_bytes(ts_bytes);
+    let mut secs_bytes = [0u8; 8];
+    for (i, b) in secs_bytes.iter_mut().enumerate() {
+        *b = byte(data, 23 + i);
+    }
+    // bar_secs must be > 0 for the spec to be accepted at all; the interesting
+    // half is how large it can be before the timeline stops fitting.
+    let bar_secs = i64::from_le_bytes(secs_bytes).saturating_abs().max(1);
 
     let spec = GenSpec {
         seed,
         bars,
         start_price: 100.0,
-        start_ts: 1_700_000_000,
-        bar_secs: 3600,
+        start_ts,
+        bar_secs,
         regimes: vec![Regime {
             kind,
             len: bars,

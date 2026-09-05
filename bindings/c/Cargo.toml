@@ -15,7 +15,14 @@ publish = false
 
 [lib]
 name = "wickra_synth"
-crate-type = ["cdylib", "staticlib"]
+# cdylib and staticlib are what the six C-capable languages link. rlib is here
+# so the fuzz crate can link this one as a Rust dependency: this is the only
+# `unsafe` in the workspace and the only place a memory fault can originate,
+# SECURITY.md names its buffer protocol as in scope, and a surface that takes
+# outside data owes a fuzz target. Neither of the other two crate types can be
+# depended on from Rust, so without this the one thing worth fuzzing is the one
+# thing that cannot be.
+crate-type = ["cdylib", "staticlib", "rlib"]
 
 # The C ABI inherently needs `unsafe` (raw pointers across the FFI boundary); the
 # workspace forbids it everywhere else, so this crate re-allows it locally. The
