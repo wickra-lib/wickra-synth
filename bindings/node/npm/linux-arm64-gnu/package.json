@@ -15,6 +15,9 @@
   "os": [
     "linux"
   ],
+  "libc": [
+    "glibc"
+  ],
   "cpu": [
     "arm64"
   ],

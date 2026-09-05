@@ -6,7 +6,7 @@ commitments, and may change.
 
 ## Toward 0.1.0
 
-- The `synth-core` engine: `GenSpec` model, the portable SplitMix64 → xoshiro256++
+- The `wickra-synth-core` engine: `GenSpec` model, the portable SplitMix64 → xoshiro256++
   PRNG, the price walk, and order-book / trade / funding synthesis.
 - The `command_json` boundary and the reference CLI.
 - The ten-language binding surface (C ABI hub + native Python/Node/WASM).

@@ -1,6 +1,6 @@
 //! Deterministic synthetic market-microstructure engine.
 //!
-//! `synth-core` turns a data-driven [`GenSpec`] into OHLCV [`Candle`]s plus
+//! `wickra-synth-core` turns a data-driven [`GenSpec`] into OHLCV [`Candle`]s plus
 //! [`BookSnapshot`]s, [`Trade`]s and [`FundingSample`]s. All randomness flows
 //! through one portable PRNG ([`DetRng`], seeded by SplitMix64), and nowhere
 //! else, so a given seed yields the **byte-identical** stream on every platform
@@ -33,7 +33,7 @@ pub use generate::{generate, generate_stream};
 pub use output::{BookSnapshot, Candle, Event, FundingSample, GenOutput, Level, Side, Trade};
 pub use rng::{mix, DetRng, SplitMix64};
 pub use spec::{FundingSpec, GenSpec, Microstructure, Regime, RegimeKind};
-pub use synth::Synth;
+pub use synth::{stream_json, Synth};
 pub use walk::walk;
 
 #[cfg(feature = "validate")]

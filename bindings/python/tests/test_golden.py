@@ -1,7 +1,7 @@
 """Cross-language golden: every binding must produce byte-identical output JSON.
 
 The fixtures live in the repository-root ``golden/`` directory (specs + expected
-responses), blessed from ``synth-core::generate``. This binding must reproduce
+responses), blessed from ``wickra-synth-core::generate``. This binding must reproduce
 them byte-for-byte.
 """
 
@@ -23,7 +23,15 @@ def _spec_files() -> list[pathlib.Path]:
     return sorted(specs.glob("*.json"))
 
 
-@pytest.mark.skipif(not GOLDEN.exists(), reason="golden fixtures not present yet")
+def test_golden_corpus_is_present() -> None:
+    """A parametrize over an empty list collects nothing and passes.
+
+    Without this the whole cross-language guarantee could evaporate from the
+    Python side by moving a directory, and the suite would stay green.
+    """
+    assert _spec_files(), f"no golden specs under {GOLDEN / 'specs'}"
+
+
 @pytest.mark.parametrize("spec_path", _spec_files())
 def test_golden_generate_is_byte_identical(spec_path: pathlib.Path) -> None:
     expected = (GOLDEN / "expected" / f"{spec_path.stem}.json").read_text(

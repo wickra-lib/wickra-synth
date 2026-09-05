@@ -1,7 +1,7 @@
 # Golden fixtures
 
 The cross-language golden corpus. Each `specs/<name>.json` is a `GenSpec`; each
-`expected/<name>.json` is the exact `GenOutput` JSON that `synth-core::generate`
+`expected/<name>.json` is the exact `GenOutput` JSON that `wickra-synth-core::generate`
 produces for it. Every language binding replays the same specs and must return
 byte-for-byte the same `expected/<name>.json`.
 
@@ -27,7 +27,7 @@ binding draw order that make this reproducible across all ten languages.
 ## Blessing
 
 Regenerate the expected outputs from the specs with the CLI (JSON output is
-byte-identical to `synth-core::generate`):
+byte-identical to `wickra-synth-core::generate`):
 
 ```bash
 cargo build -p wickra-synth --release

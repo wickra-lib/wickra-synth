@@ -62,7 +62,7 @@ pub struct Args {
 pub enum Format {
     /// A compact human-readable summary.
     Text,
-    /// The full output as JSON (byte-identical to `synth_core::generate`).
+    /// The full output as JSON (byte-identical to `wickra_synth_core::generate`).
     Json,
     /// The candles as CSV (`timestamp,open,high,low,close,volume`).
     Csv,

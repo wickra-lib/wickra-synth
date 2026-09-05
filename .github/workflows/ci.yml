@@ -18,6 +18,21 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Flake defence, layer one: make the tools themselves retry. This is the
+# cheapest and broadest of the three layers and it was the one missing here --
+# release.yml has carried it since it was written, while ci.yml, which runs on
+# every push and pull request and fetches from five registries across three
+# operating systems, did not. A manual re-run is a bug report against the
+# pipeline, not a workflow.
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_NET_RETRY: "10"
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  npm_config_fetch_retries: "5"
+  npm_config_fetch_retry_maxtimeout: "120000"
+  PIP_RETRIES: "5"
+  PIP_DEFAULT_TIMEOUT: "120"
+
 jobs:
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.features }})
@@ -104,7 +119,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+      - uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         with:
           tool: cargo-deny
       - run: cargo deny check
@@ -146,7 +161,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cbindgen
-        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         with:
           tool: cbindgen
       - name: Build the C ABI library (cdylib + staticlib)
@@ -181,9 +196,26 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Set up Python
+        id: setup_python
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Wait before the Python retry
+        if: steps.setup_python.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Python failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Python (retry)
+        if: steps.setup_python.outcome == 'failure'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The hash-pinned lock, not a bare `pip install maturin pytest`. The
@@ -210,11 +242,30 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Node
+        id: setup_node
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: bindings/node/package-lock.json
+
+      - name: Wait before the Node retry
+        if: steps.setup_node.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Node failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Node (retry)
+        if: steps.setup_node.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: bindings/node/package-lock.json
+
       # npm install (not npm ci): the per-platform optionalDependencies point at
       # native packages that are not published until the first release.
       - name: Install Node dependencies
@@ -259,7 +310,7 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install wasm-pack
-        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         with:
           tool: wasm-pack
       - name: Build the wasm binding (web target)
@@ -287,10 +338,28 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - name: Set up Go
+        id: setup_go
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "stable"
           cache: false
+
+      - name: Wait before the Go retry
+        if: steps.setup_go.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Go failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Go (retry)
+        if: steps.setup_go.outcome == 'failure'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
@@ -347,9 +416,26 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      - name: Set up .NET
+        id: setup_dotnet
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
+
+      - name: Wait before the .NET retry
+        if: steps.setup_dotnet.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up .NET failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up .NET (retry)
+        if: steps.setup_dotnet.outcome == 'failure'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+
       # The test project copies the native library from target/release (see the
       # <Content> items), so build it in the release profile here.
       - name: Build the C ABI library
@@ -374,11 +460,30 @@ jobs:
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
         run: cargo build -p wickra-synth-c
-      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+      - name: Set up Java
+        id: setup_java
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
+
+      - name: Wait before the Java retry
+        if: steps.setup_java.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Java failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Java (retry)
+        if: steps.setup_java.outcome == 'failure'
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
       - name: Test the Java binding
         run: mvn -B -f bindings/java test
 
@@ -401,10 +506,28 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-synth-c --release
-      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+      - name: Set up R
+        id: setup_r
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
         with:
           r-version: "release"
           use-public-rspm: true
+
+      - name: Wait before the R retry
+        if: steps.setup_r.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up R failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up R (retry)
+        if: steps.setup_r.outcome == 'failure'
+        uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
       - name: Install and test the R binding
         shell: bash
         # github.workspace is a backslash path on Windows; Makevars(.win) (sh) and
@@ -430,10 +553,33 @@ jobs:
           # where that directory simply exists.
           Rscript bindings/r/golden_test.R
 
+      # R CMD INSTALL compiles and loads; it does not check. r-universe runs
+      # R CMD check, and the problems it surfaces -- undocumented exported
+      # objects, codoc mismatches, an example that does not parse -- are
+      # invisible to everything above. They appear first on a public build page
+      # with no local reproduction path, which is how a sibling repository
+      # shipped 0 of 13 platform binaries. Ubuntu only; these checks are
+      # platform-independent.
+      - name: R CMD check, the way r-universe will
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          set -euo pipefail
+          R CMD build bindings/r --no-build-vignettes --no-manual
+          R CMD check wickrasynth_*.tar.gz --no-manual --no-vignettes --no-tests || true
+          log=$(find . -maxdepth 2 -name 00check.log | head -1)
+          echo "::group::00check.log"; cat "$log"; echo "::endgroup::"
+          problems=$(grep -E '\.\.\. (WARNING|ERROR)' "$log" || true)
+          if [ -n "$problems" ]; then
+            echo "::error::R CMD check found problems:"
+            echo "$problems"
+            exit 1
+          fi
+
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop: an instrumented build of synth-core plus the upload
+    timeout-minutes: 30 # backstop: an instrumented build of wickra-synth-core plus the upload
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -443,14 +589,18 @@ jobs:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         with:
           tool: cargo-llvm-cov
-      # The determinism moat lives in synth-core: the fold, the label
-      # formulas, canonical serialization and scaling. Measure it in isolation so
-      # patch coverage tracks the core.
+      # Both published crates. The determinism moat is in wickra-synth-core, but
+      # wickra-synth (the CLI) is hand-written product code -- the renderers, the
+      # CSV writer, the spec dispatch -- and it is the tool golden/README.md
+      # blesses the corpus with. Excluding it is only justified for the bindings,
+      # which are delegation glue; it was never justified here, and the one
+      # output-format defect in this repository lived in the unmeasured half.
       - name: Generate coverage (lcov)
-        run: cargo llvm-cov -p synth-core --all-features --lcov --output-path lcov.info
+        run: |
+          cargo llvm-cov -p wickra-synth-core -p wickra-synth --all-features             --lcov --output-path lcov.info
       - name: Upload to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
@@ -536,7 +686,7 @@ jobs:
           workspaces: fuzz
 
       - name: Install cargo-fuzz
-        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         timeout-minutes: 10 # fail fast on a stuck download instead of hanging the job
         with:
           tool: cargo-fuzz
@@ -567,7 +717,7 @@ jobs:
             echo "::endgroup::"
           done <<< "$targets"
 
-  # synth-core is a published library, so its public API is a promise. Nothing
+  # wickra-synth-core is a published library, so its public API is a promise. Nothing
   # checked whether a change kept it.
   semver:
     name: Public API (cargo-semver-checks)
@@ -585,12 +735,12 @@ jobs:
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
       - name: Install cargo-semver-checks
-        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         timeout-minutes: 10 # fail fast on a stuck download instead of hanging the job
         with:
           tool: cargo-semver-checks
 
-      # synth-core only, and named rather than --workspace. The bench and binding
+      # wickra-synth-core only, and named rather than --workspace. The bench and binding
       # crates are not published; wickra-synth is a binary with no library
       # target, so it exposes no Rust API to keep a promise about. That leaves
       # exactly one crate whose surface a consumer can depend on.
@@ -601,7 +751,7 @@ jobs:
       - name: Check the published crates
         run: |
           set -uo pipefail
-          out=$(cargo semver-checks check-release -p synth-core 2>&1) && status=0 || status=$?
+          out=$(cargo semver-checks check-release -p wickra-synth-core 2>&1) && status=0 || status=$?
           echo "$out"
           if [ "$status" -ne 0 ] && echo "$out" | grep -qiE "no.*baseline|not found in registry|does not exist"; then
             echo "::notice::no published baseline yet -- semver has nothing to compare against"
@@ -625,31 +775,136 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Node
+        id: setup_node
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+
+      - name: Wait before the Node retry
+        if: steps.setup_node.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Node failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Node (retry)
+        if: steps.setup_node.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Set up Python
+        id: setup_python
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+
+      - name: Wait before the Python retry
+        if: steps.setup_python.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Python failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Python (retry)
+        if: steps.setup_python.outcome == 'failure'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Set up Go
+        id: setup_go
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "stable"
           cache: false
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+
+      - name: Wait before the Go retry
+        if: steps.setup_go.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Go failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Go (retry)
+        if: steps.setup_go.outcome == 'failure'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+
+      - name: Set up .NET
+        id: setup_dotnet
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
-      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+
+      - name: Wait before the .NET retry
+        if: steps.setup_dotnet.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up .NET failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up .NET (retry)
+        if: steps.setup_dotnet.outcome == 'failure'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+
+      - name: Set up Java
+        id: setup_java
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+
+      - name: Wait before the Java retry
+        if: steps.setup_java.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Java failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Java (retry)
+        if: steps.setup_java.outcome == 'failure'
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Set up R
+        id: setup_r
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
+      - name: Wait before the R retry
+        if: steps.setup_r.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up R failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up R (retry)
+        if: steps.setup_r.outcome == 'failure'
+        uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2.13.0
         with:
           r-version: "release"
           use-public-rspm: true
 
       - name: Install wasm-pack
-        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         with:
           tool: wasm-pack
 
@@ -786,7 +1041,7 @@ jobs:
           persist-credentials: false
 
       - name: Install osv-scanner
-        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        uses: taiki-e/install-action@742a3317eac7bd62f91cd888b4eead5e784ba833 # v2.87.1
         timeout-minutes: 10
         with:
           tool: osv-scanner

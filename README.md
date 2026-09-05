@@ -30,7 +30,7 @@
 
 > **Part of the [Wickra ecosystem](https://github.com/wickra-lib):** the same data-driven core and ten-language binding surface also power [wickra-exchange](https://github.com/wickra-lib/wickra-exchange), [wickra-backtest](https://github.com/wickra-lib/wickra-backtest), [wickra-terminal](https://github.com/wickra-lib/wickra-terminal) and 20 more — see [the full list](https://github.com/wickra-lib).
 
-Wickra Synth is one data-driven core, `synth-core`: a serde **`GenSpec`**
+Wickra Synth is one data-driven core, `wickra-synth-core`: a serde **`GenSpec`**
 describes a market regime, a fixed **portable PRNG** (SplitMix64 seeding
 xoshiro256++) drives it, and the core emits **OHLCV candles** plus **order-book
 snapshots**, **trades** and **funding samples** — realistic synthetic
@@ -64,7 +64,10 @@ place; the generation model and command protocol are pinned by golden tests.
 
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) — workspace layout and the
   core-only-randomness design.
-- [GENSPEC.md](docs/GENSPEC.md) — the input specification and its fields.
+- [GENSPEC.md](docs/GENSPEC.md) — the input specification, its fields and every
+  validation rule.
+- [PROTOCOL.md](docs/PROTOCOL.md) — the `command_json` boundary all ten
+  bindings forward to.
 - [REGIMES.md](docs/REGIMES.md) — the trend / range / crash / vol price-path formulas.
 - [MICROSTRUCTURE.md](docs/MICROSTRUCTURE.md) — order book, trades and funding.
 - [DETERMINISM.md](docs/DETERMINISM.md) — the PRNG and the fixed draw-order contract.

@@ -66,7 +66,13 @@ fn generate_core(spec: &GenSpec) -> Result<Vec<BarResult>> {
             funding,
         });
 
-        bar_ts += spec.bar_secs;
+        // Only while there is a next bar to date. Advancing after the last
+        // one computed a timestamp nothing reads and, at the end of i64,
+        // overflowed on it -- so the bound that has to hold is over `bars - 1`
+        // steps, which is what `GenSpec::validate` checks.
+        if i + 1 < spec.bars {
+            bar_ts += spec.bar_secs;
+        }
         bars_into_regime += 1;
         if bars_into_regime == regime.len {
             regime_idx += 1;

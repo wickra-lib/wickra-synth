@@ -1,6 +1,6 @@
 # Wickra Synth — workspace.
 # A deterministic synthetic-microstructure generator built as one data-driven
-# core (`synth-core`): a serde `GenSpec` describes a market regime, a fixed
+# core (`wickra-synth-core`): a serde `GenSpec` describes a market regime, a fixed
 # portable PRNG (SplitMix64 seeding xoshiro256++) drives it, and the core emits
 # OHLCV candles plus order-book snapshots, trades and funding — byte-for-byte
 # identical for a given seed on every platform and in every language. The core
@@ -39,7 +39,7 @@ wickra-core = "1.0"
 # Workspace-internal crate, referenced by the CLI, bench and bindings.
 # The generator is sequential by construction: every draw comes from one PRNG
 # stream in a fixed order, so bar N cannot be produced before bar N-1.
-synth-core = { version = "0.1.0", path = "crates/synth-core", default-features = false }
+wickra-synth-core = { version = "0.1.0", path = "crates/synth-core", default-features = false }
 # Serialization — the data-driven boundary (spec/command/output as JSON).
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

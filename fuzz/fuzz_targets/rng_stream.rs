@@ -4,7 +4,7 @@
 //! loops forever, and the same seed always produces the same sequence.
 
 use libfuzzer_sys::fuzz_target;
-use synth_core::DetRng;
+use wickra_synth_core::DetRng;
 
 fuzz_target!(|data: &[u8]| {
     let mut seed = [0u8; 8];

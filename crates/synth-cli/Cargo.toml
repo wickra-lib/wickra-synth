@@ -1,4 +1,4 @@
-# wickra-synth — the reference command-line consumer of synth-core.
+# wickra-synth — the reference command-line consumer of wickra-synth-core.
 #
 # Loads a GenSpec (from a file or the quick-spec flags), generates the batch or
 # streamed output, and prints it as text, JSON, or CSV.
@@ -32,7 +32,7 @@ name = "wickra-synth"
 path = "src/main.rs"
 
 [dependencies]
-synth-core.workspace = true
+wickra-synth-core.workspace = true
 serde_json.workspace = true
 clap.workspace = true
 

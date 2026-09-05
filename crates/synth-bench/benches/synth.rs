@@ -1,11 +1,11 @@
-//! Criterion benchmarks for `synth-core::generate`.
+//! Criterion benchmarks for `wickra-synth-core::generate`.
 //!
 //! Generation is sequential by construction, so there is one engine and one
 //! measurement. Vary bar count, book depth and trade rate to see how each
 //! dimension scales.
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use synth_core::{generate, FundingSpec, GenSpec, Microstructure, Regime, RegimeKind};
+use wickra_synth_core::{generate, FundingSpec, GenSpec, Microstructure, Regime, RegimeKind};
 
 fn spec(bars: usize, book_depth: usize, trade_rate: f64) -> GenSpec {
     GenSpec {

@@ -43,7 +43,7 @@ NPM_PLATFORMS = [
 TOUCHPOINTS: list[tuple[str, str, int]] = [
     # The workspace version, and the path dependency that pins it.
     ("Cargo.toml", r'(?m)^version = "{v}"$', 1),
-    ("Cargo.toml", r'synth-core = \{{ version = "{v}"', 1),
+    ("Cargo.toml", r'wickra-synth-core = \{{ version = "{v}"', 1),
     # Python: maturin reads the version from pyproject, not from Cargo.toml.
     ("bindings/python/pyproject.toml", r'(?m)^version = "{v}"$', 1),
     # Node: the package itself plus one optional dependency per platform.
@@ -74,6 +74,12 @@ TOUCHPOINTS += [
 ]
 
 # Deliberately not touchpoints, so nobody adds them later after a fruitless grep:
+#   bindings/node/index.js          -- napi writes the version into the loader's
+#                                      error paths, 52 times. It is generated and
+#                                      committed, and ci.yml regenerates it and
+#                                      diffs, so a stale literal is already a red
+#                                      build. Counting it here would duplicate a
+#                                      stronger check with a weaker one.
 #   examples/csharp/Gen/Gen.csproj  -- <ProjectReference>, carries no version
 #   examples/go/go.mod              -- replace directive, carries no version
 #   CITATION.cff                    -- no version field until the first release

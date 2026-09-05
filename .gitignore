@@ -1,10 +1,10 @@
 /target
-# cargo-fuzz builds in a detached workspace under fuzz/; its build dir and
-# resolved lockfile are local artifacts, never committed.
-/fuzz/target
-/fuzz/Cargo.lock
-/fuzz/corpus
-/fuzz/artifacts
+# cargo-fuzz build output and campaign state live under fuzz/, which has its
+# own .gitignore now -- the rules belong beside the crate they describe, and
+# keeping them here made it easy to ignore fuzz/Cargo.lock along with them.
+# That lockfile is committed: a detached workspace without one resolves
+# differently on every machine, and the /fuzz Dependabot entry would have
+# nothing to update.
 **/*.rs.bk
 Cargo.lock.bak
 .DS_Store
@@ -52,3 +52,7 @@ bindings/r/..Rcheck/
 .env.*
 *.key
 secrets/
+
+# R CMD check output, produced by the check job and by hand.
+*.Rcheck/
+wickrasynth_*.tar.gz

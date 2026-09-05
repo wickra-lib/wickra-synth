@@ -44,7 +44,7 @@ The regime lengths sum to `bars` (8 × 4 = 32) — a mismatch is rejected.
 ## From Rust
 
 ```rust
-use synth_core::{generate, GenSpec};
+use wickra_synth_core::{generate, GenSpec};
 
 let spec: GenSpec = GenSpec::from_json(spec_json).expect("valid spec");
 let out = generate(&spec).expect("generate");

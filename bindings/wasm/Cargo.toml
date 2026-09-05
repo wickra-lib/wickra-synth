@@ -29,5 +29,5 @@ workspace = true
 # inherited workspace dependency. The core declares no default features, so the
 # wasm build runs the same code as the native one — the exact cross-language
 # golden check.
-synth-core = { path = "../../crates/synth-core", version = "0.1.0", default-features = false }
+wickra-synth-core = { path = "../../crates/synth-core", version = "0.1.0", default-features = false }
 wasm-bindgen = "0.2"

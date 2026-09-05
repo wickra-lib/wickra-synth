@@ -2,7 +2,7 @@
 //! and the spec format rejects unknown and missing fields — the JSON contract is
 //! the binding surface, so a silent shape change here would break every binding.
 
-use synth_core::{
+use wickra_synth_core::{
     generate, BookSnapshot, Candle, Event, FundingSample, FundingSpec, GenSpec, Level,
     Microstructure, Regime, RegimeKind, Side, Trade,
 };
@@ -112,7 +112,7 @@ fn output_types_roundtrip() {
 
 #[test]
 fn event_variants_roundtrip() {
-    let events = synth_core::generate_stream(&GenSpec::from_json(SPEC).unwrap()).unwrap();
+    let events = wickra_synth_core::generate_stream(&GenSpec::from_json(SPEC).unwrap()).unwrap();
     // The stream carries every event variant (trade, book, candle, funding).
     for ev in &events {
         roundtrip(ev);

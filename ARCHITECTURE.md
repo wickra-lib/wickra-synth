@@ -16,7 +16,7 @@ CORE  crates/synth-core: GenSpec (serde) → portable PRNG (SplitMix64 → xoshi
 CLI   crates/synth-cli: generate from a GenSpec file or inline JSON
 ```
 
-- **`synth-core`** is the engine. A serde `GenSpec` describes the market regime;
+- **`wickra-synth-core`** is the engine. A serde `GenSpec` describes the market regime;
   a fixed portable PRNG drives the price walk and the microstructure synthesis;
   the result is a `GenOutput` of OHLCV candles plus order-book snapshots, trades
   and funding samples. The whole surface is reachable through a single
@@ -29,7 +29,7 @@ CLI   crates/synth-cli: generate from a GenSpec file or inline JSON
 
 ## Determinism is the core property
 
-The one place randomness is allowed is the PRNG inside `synth-core`, and it is a
+The one place randomness is allowed is the PRNG inside `wickra-synth-core`, and it is a
 **fixed, portable, deterministic** generator: a SplitMix64 seed expander feeding
 a xoshiro256++ stream, implemented in the Rust core with explicit `u64`
 arithmetic so it produces the identical bit sequence on every target. No binding

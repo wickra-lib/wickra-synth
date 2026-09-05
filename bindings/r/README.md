@@ -4,6 +4,16 @@ R bindings for the Wickra synthetic-microstructure generator over its C ABI hub,
 via `.Call`. A synth is built from a spec JSON and driven over a JSON boundary,
 so the result is byte-identical to every other Wickra Synth binding.
 
+## Requirements
+
+`DESCRIPTION` declares `R (>= 4.1)`. Nothing in the binding needs a feature
+newer than base R has had for years — the floor is the oldest release this
+project is willing to support rather than a technical minimum, because nothing
+older is tested. CI builds against R `release` only.
+
+The native library is not a system dependency: `configure` downloads the C ABI
+matching this package's version and bundles it beside the compiled object.
+
 ## Build & test
 
 The C ABI header and shared library are provided out-of-tree through two

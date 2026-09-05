@@ -27,7 +27,7 @@ use core::ffi::{c_char, CStr};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
 
-use synth_core::Synth;
+use wickra_synth_core::Synth;
 
 /// A required pointer argument (`handle` or `cmd_json`) was null.
 pub const WICKRA_SYNTH_ERR_NULL: i32 = -1;
@@ -35,6 +35,16 @@ pub const WICKRA_SYNTH_ERR_NULL: i32 = -1;
 pub const WICKRA_SYNTH_ERR_UTF8: i32 = -2;
 /// A panic was caught at the FFI boundary.
 pub const WICKRA_SYNTH_ERR_PANIC: i32 = -3;
+
+/// A different command arrived while a measured response was still undelivered.
+///
+/// The two-call protocol is measure-then-write for **one** command. Interleaving
+/// a second command between the two calls used to drop the cached response
+/// silently, so the third call re-executed the first command -- and `set_spec`
+/// mutates the handle, so "apply exactly once" was not what happened. Refusing
+/// is the honest answer: the caller's next step is to finish the pair, or to
+/// pass `out = NULL, cap = 0` again to restart it.
+pub const WICKRA_SYNTH_ERR_PENDING: i32 = -4;
 
 /// An opaque handle to a synth instance. Created by
 /// [`wickra_synth_new`] and destroyed by [`wickra_synth_free`];
@@ -125,6 +135,13 @@ pub unsafe extern "C" fn wickra_synth_command(
     // bytes still sitting in the cache. The measure-then-write two-call protocol
     // must apply a stateful command (`set_spec`) exactly once.
     let is_retry = matches!(&store.pending, Some((bytes, _)) if bytes.as_slice() == cmd.as_bytes());
+    // A pending response belongs to the command that measured it. Anything else
+    // arriving in between is a protocol error, not a reason to quietly discard
+    // it -- discarding is what made a later, identical call execute `set_spec` a
+    // second time.
+    if store.pending.is_some() && !is_retry {
+        return WICKRA_SYNTH_ERR_PENDING;
+    }
     if !is_retry {
         let response = match catch_unwind(AssertUnwindSafe(|| store.inner.command_json(cmd))) {
             // `command_json` folds domain errors into `{"ok":false,...}` JSON, so
@@ -327,5 +344,72 @@ mod tests {
         let p = wickra_synth_version();
         let v = unsafe { CStr::from_ptr(p) }.to_str().unwrap();
         assert_eq!(v, env!("CARGO_PKG_VERSION"));
+    }
+
+    /// Interleaving a different command between the measure and the write used
+    /// to drop the cached response, so a later identical call executed the
+    /// command a second time -- and `set_spec` mutates the handle. Refused now,
+    /// and the refusal is what this asserts: the caller is told, rather than
+    /// silently getting the mutation twice.
+    #[test]
+    fn interleaving_a_command_is_refused_rather_than_re_executed() {
+        let spec = CString::new(SPEC).unwrap();
+        let handle = unsafe { wickra_synth_new(spec.as_ptr()) };
+        assert!(!handle.is_null());
+
+        let generate = CString::new(r#"{"cmd":"generate"}"#).unwrap();
+        let version = CString::new(r#"{"cmd":"version"}"#).unwrap();
+
+        // Measure the first command; its response is now pending.
+        let len = unsafe { wickra_synth_command(handle, generate.as_ptr(), ptr::null_mut(), 0) };
+        assert!(len > 0);
+
+        // A different command before the write is a protocol error.
+        let mut buf = vec![0u8; 64];
+        let code = unsafe {
+            wickra_synth_command(handle, version.as_ptr(), buf.as_mut_ptr().cast(), buf.len())
+        };
+        assert_eq!(code, WICKRA_SYNTH_ERR_PENDING);
+
+        // Finishing the original pair still works, and the buffer the refused
+        // call was given was left untouched.
+        assert!(buf.iter().all(|&b| b == 0));
+        let mut out = vec![0u8; usize::try_from(len).unwrap() + 1];
+        let written = unsafe {
+            wickra_synth_command(
+                handle,
+                generate.as_ptr(),
+                out.as_mut_ptr().cast(),
+                out.len(),
+            )
+        };
+        assert_eq!(written, len);
+        assert!(read_buf(&out).contains("\"candles\""));
+
+        unsafe { wickra_synth_free(handle) };
+    }
+
+    /// And once the pair is complete the handle is free again, so the next
+    /// command is not refused.
+    #[test]
+    fn a_delivered_response_clears_the_pending_slot() {
+        let spec = CString::new(SPEC).unwrap();
+        let handle = unsafe { wickra_synth_new(spec.as_ptr()) };
+        let version = CString::new(r#"{"cmd":"version"}"#).unwrap();
+
+        let len = unsafe { wickra_synth_command(handle, version.as_ptr(), ptr::null_mut(), 0) };
+        let mut out = vec![0u8; usize::try_from(len).unwrap() + 1];
+        unsafe {
+            wickra_synth_command(handle, version.as_ptr(), out.as_mut_ptr().cast(), out.len())
+        };
+
+        let generate = CString::new(r#"{"cmd":"generate"}"#).unwrap();
+        let next = unsafe { wickra_synth_command(handle, generate.as_ptr(), ptr::null_mut(), 0) };
+        assert!(
+            next > 0,
+            "a completed pair should not block the next command"
+        );
+
+        unsafe { wickra_synth_free(handle) };
     }
 }

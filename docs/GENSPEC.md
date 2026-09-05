@@ -58,8 +58,45 @@ file. Unknown fields are rejected (`deny_unknown_fields`).
 }
 ```
 
-The regime lengths **must** sum to `bars`; otherwise `Synth::new` rejects the
-spec. Source: `crates/synth-core/src/spec.rs`.
+## Validation
+
+`GenSpec::validate` is the whole input contract, and it is public: a caller that
+builds a spec in code rather than parsing one can ask before generating.
+`from_json`, `from_toml` and every `command_json` path run it, so a spec that
+reaches the generator has passed all of it. The generator may then assume
+validity, which is why it contains no defensive checks of its own.
+
+The first violated rule is the one reported.
+
+| Rule | Message |
+|------|---------|
+| `bars > 0` | `bars must be > 0` |
+| `start_price` finite and `> 0` | `start_price must be finite and > 0` |
+| `bar_secs > 0` | `bar_secs must be > 0` |
+| `regimes` non-empty | `regimes must not be empty` |
+| every `regime.len > 0` | `regime len must be > 0` |
+| every `regime.drift` finite | `regime drift must be finite` |
+| every `regime.vol` finite and `>= 0` | `regime vol must be finite and >= 0` |
+| regime lengths sum to `bars` | `sum of regime lengths must equal bars` |
+| `book_depth > 0` | `book_depth must be > 0` |
+| `spread_bps` finite and `>= 0` | `spread_bps must be finite and >= 0` |
+| `trade_rate` finite and `>= 0` | `trade_rate must be finite and >= 0` |
+| `funding.interval_bars > 0` | `funding.interval_bars must be > 0` |
+| `funding.base_rate` and `sensitivity` finite | `funding base_rate and sensitivity must be finite` |
+| the timeline fits: `start_ts + (bars - 1) * bar_secs` does not overflow `i64` | `start_ts + (bars - 1) * bar_secs overflows i64` |
+
+The last rule is the one that is not obvious from the field list. The generator
+walks `bar_ts += bar_secs` once per bar; without it, a spec near the end of
+`i64` panicked in a debug build and wrapped in a release build, so the last
+candle carried a timestamp before the first.
+
+**What is deliberately not bounded:** `bars` and `book_depth` have no upper
+limit. They are the caller's own sizes, and generating a billion bars allocates
+a billion bars — that is the API doing what it was asked, not a defect. A
+process that accepts specs from an untrusted source bounds them itself; see
+[SECURITY.md](../SECURITY.md).
+
+Source: `crates/synth-core/src/spec.rs`.
 
 ## See also
 

@@ -6,7 +6,7 @@
 //! cargo run -p wickra-synth-example
 //! ```
 
-use synth_core::{generate, GenSpec};
+use wickra_synth_core::{generate, GenSpec};
 
 const SPEC: &str = r#"{
     "seed": 42,
@@ -21,7 +21,7 @@ fn main() {
     let spec: GenSpec = GenSpec::from_json(SPEC).expect("valid spec");
     let out = generate(&spec).expect("generate");
 
-    println!("wickra-synth {}", synth_core::version());
+    println!("wickra-synth {}", wickra_synth_core::version());
     println!("bars: {}", out.candles.len());
     println!("first 3 candles:");
     for candle in out.candles.iter().take(3) {
