@@ -40,14 +40,18 @@ jobs:
   # release can take back.
   # --------------------------------------------------------------------------
   gate:
-    name: Gate (tag and version agree)
-    # Above the twenty-minute wait for CI, with room for the checkout and the
-    # two checks around it.
-    timeout-minutes: 30
+    name: Nothing publishes before this
+    # Every build job, so that "something does not build" happens in front of the
+    # first irreversible step rather than beside it. Six registries cannot be
+    # made atomic; that failure can still be moved.
+    needs: [python-wheels, python-sdist, node-build, wasm-build, c-abi-build, cli-binaries]
+    # Generous because this job waits for ci.yml to settle on the tagged commit;
+    # the wait itself is bounded to 45 minutes inside the step.
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      checks: read # read the check runs on the tagged commit
+      actions: read # read the workflow runs on the tagged commit
     outputs:
       version: ${{ steps.check.outputs.version }}
     steps:
@@ -90,50 +94,74 @@ jobs:
       - name: Every version declaration agrees with the tag
         run: python3 scripts/check_version_sync.py
 
-      # And CI has to have passed on this exact commit. ci.yml does not run on
-      # tags, so the runs being read are the ones from the commit's life on main
+      # And ci.yml has to have passed on this exact commit. It never runs on a
+      # tag, so what is read here is the verdict from the commit's life on main
       # -- which is the point: the tag names a commit, and the question is
-      # whether that commit is green.
+      # whether that commit was tested.
+      #
+      # Asked of the ci.yml *workflow run*, not of the commit's check runs. The
+      # check-run list includes this workflow's own jobs, and those are queued
+      # behind this gate, so waiting for them to complete waits forever.
       #
       # The distinction that matters is "not decided yet" against "decided
-      # against". Treating a still-running check as a failure refuses correct
-      # tags, so this waits, up to twenty minutes, and only then gives up -- and
-      # says it gave up on time rather than on a result. A commit with no checks
-      # at all is also refused: nothing to read is not the same as nothing wrong.
-      - name: CI is green on the tagged commit
+      # against". A tag pushed straight after its merge lands while ci.yml is
+      # still queued, and refusing there turns "tagged a minute early" into a
+      # failed release. So an undecided run is waited on, bounded at 45 minutes
+      # -- twenty was tried and is under the observed runtime of this matrix. A
+      # red conclusion still ends it immediately.
+      - name: ci.yml is green on the tagged commit
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
           REPO: ${{ github.repository }}
         run: |
-          set -uo pipefail
-          deadline=$(( $(date +%s) + 20 * 60 ))
+          set -euo pipefail
+          deadline=$(( $(date +%s) + 45 * 60 ))
           while :; do
-            states=$(gh api "repos/$REPO/commits/$SHA/check-runs" --paginate \
-                       -q '.check_runs[] | select(.name != "Gate (tag and version agree)")
-                           | "\(.status):\(.conclusion)"')
-            if [ -z "$states" ]; then
-              echo "::error::no check runs found for $SHA -- nothing to read is not the same as nothing wrong"
-              exit 1
-            fi
-            pending=$(echo "$states" | grep -cv '^completed:' || true)
-            failed=$(echo "$states" | grep -E '^completed:(failure|timed_out|action_required)' || true)
-            if [ -n "$failed" ]; then
-              echo "::error::CI is not green on $SHA:"
-              echo "$failed"
-              exit 1
-            fi
-            if [ "$pending" -eq 0 ]; then
-              echo "CI is green on $SHA ($(echo "$states" | wc -l) checks)"
+            state=$(gh api "repos/$REPO/actions/workflows/ci.yml/runs?head_sha=$SHA&per_page=1" \
+                      -q '(.workflow_runs[0] // {}) | "\(.status // "missing") \(.conclusion // "null")"')
+            status=${state%% *}
+            conclusion=${state##* }
+            if [ "$conclusion" = "success" ]; then
+              echo "ci.yml on $SHA: success"
               break
             fi
-            if [ "$(date +%s)" -ge "$deadline" ]; then
-              echo "::error::gave up waiting: $pending check(s) on $SHA still undecided after 20 minutes"
+            if [ "$conclusion" != "null" ]; then
+              echo "::error::ci.yml on $SHA is $conclusion; refusing to publish"
               exit 1
             fi
-            echo "$pending check(s) still running on $SHA; waiting 30s"
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::ci.yml on $SHA did not finish within 45 minutes ($status); refusing to publish"
+              exit 1
+            fi
+            echo "ci.yml on $SHA: $status -- waiting"
             sleep 30
           done
+
+      # And nothing else that did run may have failed. A roster of required
+      # workflow names would go stale -- codspeed.yml is path-filtered and
+      # legitimately does not run for a version bump -- so the rule is about
+      # outcomes rather than about a list: whatever ran, none of it is red.
+      # "Release" is excluded because that is this run, whose own jobs are
+      # necessarily still going.
+      - name: Nothing else on the tagged commit is red
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          bad=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&per_page=100" \
+                  -q '[.workflow_runs[]
+                       | select(.name != "Release")
+                       | select(.conclusion == "failure" or .conclusion == "timed_out"
+                                or .conclusion == "cancelled")
+                       | .name] | unique | join(", ")')
+          if [ -n "$bad" ]; then
+            echo "::error::the tagged commit has failing runs ($bad); refusing to publish"
+            exit 1
+          fi
+          echo "every workflow that ran on this commit is green"
 
   # --------------------------------------------------------------------------
   # crates.io: synth-core then the wickra-synth crate (wickra-synth binary)
@@ -141,7 +169,7 @@ jobs:
   cargo-publish:
     name: Publish to crates.io
     timeout-minutes: 45
-    needs: gate
+    needs: [gate]
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -222,7 +250,6 @@ jobs:
   python-wheels:
     name: Build wheels (${{ matrix.target }}/${{ matrix.manylinux }} on ${{ matrix.os }})
     timeout-minutes: 45
-    needs: gate
     strategy:
       fail-fast: false
       matrix:
@@ -265,7 +292,6 @@ jobs:
   python-sdist:
     name: Build Python sdist
     timeout-minutes: 45
-    needs: gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -286,7 +312,7 @@ jobs:
   python-publish:
     name: Publish to PyPI
     timeout-minutes: 45
-    needs: [python-wheels, python-sdist]
+    needs: [gate, python-wheels, python-sdist]
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -309,7 +335,6 @@ jobs:
   node-build:
     name: Node build (${{ matrix.target }})
     timeout-minutes: 45
-    needs: gate
     strategy:
       fail-fast: false
       matrix:
@@ -349,7 +374,7 @@ jobs:
   node-publish:
     name: Publish to npm
     timeout-minutes: 45
-    needs: node-build
+    needs: [gate, node-build]
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -373,15 +398,51 @@ jobs:
       # The npm/<platform>/package.json templates are committed (bindings/node/npm/),
       # so `napi artifacts` only drops the freshly built .node binary into the
       # matching directory. napi-rs CLI 3 renamed `--dir` to `--output-dir`.
-      # The platform packages are assembled here, so the licence texts have to
-      # be staged here too: their manifests list both in `files`, and npm packs
-      # what is in the directory at that moment.
-      - name: Stage the licence texts into each platform package
-        shell: bash
+      # Two proofs before anything irreversible. `napi artifacts` silently
+      # leaves a directory empty when its artefact did not arrive, and `files`
+      # silently drops a name that is not there -- so a stub that installs
+      # cleanly and fails at require(), and a package with no licence text, both
+      # publish without a word. Neither is recoverable afterwards.
+      - name: Every platform package has its binary
+        working-directory: bindings/node
         run: |
           set -euo pipefail
-          for dir in bindings/node/npm/*/; do
-            cp LICENSE-MIT LICENSE-APACHE "$dir"
+          missing=0
+          for dir in npm/*/; do
+            pkg=$(basename "$dir")
+            if ! ls "$dir"/*.node >/dev/null 2>&1; then
+              echo "::error::wickra-synth-$pkg has no .node binary; it would publish as an empty stub"
+              missing=1
+            else
+              echo "wickra-synth-$pkg: $(basename "$dir"/*.node)"
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Stage the licence texts and prove they will be packed
+        working-directory: bindings/node
+        run: |
+          set -euo pipefail
+          for dir in . npm/*/; do
+            cp ../../LICENSE-MIT ../../LICENSE-APACHE "$dir/"
+          done
+          for dir in . npm/*/; do
+            # The ${...} below are JavaScript template literals inside a
+            # single-quoted node script, not shell expansions.
+            # shellcheck disable=SC2016
+            ( cd "$dir" && npm pack --dry-run --json ) | node -e '
+              const chunks = [];
+              process.stdin.on("data", c => chunks.push(c));
+              process.stdin.on("end", () => {
+                const pkg = JSON.parse(chunks.join(""))[0];
+                const names = pkg.files.map(f => f.path);
+                const missing = ["LICENSE-MIT", "LICENSE-APACHE"].filter(n => !names.includes(n));
+                if (missing.length) {
+                  console.error(`::error::${pkg.name} would publish without ${missing.join(" and ")}`);
+                  process.exit(1);
+                }
+                console.log(`${pkg.name}: licence texts present`);
+              });'
           done
 
       - name: Move binaries into platform package layout
@@ -475,15 +536,13 @@ jobs:
   # --------------------------------------------------------------------------
   # WASM: wasm-pack build + npm publish (as `wickra-synth-wasm`)
   # --------------------------------------------------------------------------
-  wasm-publish:
-    name: Publish wickra-synth-wasm to npm
+  # Built in front of the gate and published behind it. Written as one job, the
+  # wasm build sat behind the gate -- the only build the gate could not see --
+  # and a failure there arrives after the other five registries have published.
+  wasm-build:
+    name: Build wickra-synth-wasm
     timeout-minutes: 45
-    needs: gate
     runs-on: ubuntu-latest
-    environment: release
-    permissions:
-      contents: read
-      id-token: write # Sigstore provenance from the GitHub OIDC token
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -491,7 +550,6 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
       - uses: ./.github/actions/setup-rust
         with:
           targets: wasm32-unknown-unknown
@@ -515,16 +573,50 @@ jobs:
             pkg.license = 'MIT OR Apache-2.0';
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
+      # The licence texts are not in the generated pkg/ directory; wasm-pack
+      # writes the manifest and the glue and nothing else.
+      - name: Stage the licence texts into the generated package
+        run: cp LICENSE-MIT LICENSE-APACHE bindings/wasm/pkg/
       - name: Pack wickra-synth-wasm for release attachment
         working-directory: bindings/wasm/pkg
         run: npm pack
+      # The whole generated package, not just the tarball: wasm-publish needs a
+      # directory to `npm publish` from, and rebuilding it there would put the
+      # build back behind the gate.
+      - name: Upload the generated package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wasm-package
+          path: bindings/wasm/pkg/
+          if-no-files-found: error
       - name: Upload WASM tarball
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: wasm-tarball
           path: bindings/wasm/pkg/wickra-synth-wasm-*.tgz
+          if-no-files-found: error
+
+  wasm-publish:
+    name: Publish wickra-synth-wasm to npm
+    timeout-minutes: 45
+    needs: [gate, wasm-build]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # Sigstore provenance from the GitHub OIDC token
+    steps:
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Download the generated package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wasm-package
+          path: wasm-pkg
       - name: Publish wickra-synth-wasm to npm (idempotent)
-        working-directory: bindings/wasm/pkg
+        working-directory: wasm-pkg
         run: |
           set -uo pipefail
           if out=$(npm publish --access public --provenance 2>&1); then
@@ -545,7 +637,6 @@ jobs:
   cli-binaries:
     name: CLI binary (${{ matrix.target }})
     timeout-minutes: 45
-    needs: gate
     strategy:
       fail-fast: false
       matrix:
@@ -595,7 +686,6 @@ jobs:
   c-abi-build:
     name: C ABI library (${{ matrix.target }})
     timeout-minutes: 45
-    needs: gate
     strategy:
       fail-fast: false
       matrix:
@@ -644,7 +734,7 @@ jobs:
   csharp-publish:
     name: Publish to NuGet
     timeout-minutes: 45
-    needs: c-abi-build
+    needs: [gate, c-abi-build]
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -721,7 +811,7 @@ jobs:
   java-publish:
     name: Publish to Maven Central
     timeout-minutes: 45
-    needs: c-abi-build
+    needs: [gate, c-abi-build]
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -799,7 +889,7 @@ jobs:
   go-mirror:
     name: Mirror the Go module to wickra-synth-go
     timeout-minutes: 45 # backstop only: release build/publish jobs compile from source (vendored OpenSSL) and must not be killed mid-build; far above the ~10 min real runtime
-    needs: c-abi-build
+    needs: [gate, c-abi-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1006,7 +1096,7 @@ jobs:
             R (r-universe):
 
             ```r
-            install.packages("wickrafeaturestore", repos = "https://wickra-lib.r-universe.dev")
+            install.packages("wickrasynth", repos = "https://wickra-lib.r-universe.dev")
             ```
 
             ### Attached assets
@@ -1035,6 +1125,7 @@ jobs:
         csharp-publish,
         java-publish,
         c-abi-build,
+        cli-binaries,
         github-release,
       ]
     runs-on: ubuntu-latest
@@ -1074,6 +1165,16 @@ jobs:
           pattern: c-abi-*
           path: artifacts/c-abi
           merge-multiple: true
+      # The standalone executables. Neither reference repository ships a CLI, so
+      # no inherited configuration covered these -- and they are the artefact a
+      # user is most likely to download and run directly, which makes them the
+      # ones least defensible to leave unattested.
+      - name: Download the CLI binaries
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: cli-*
+          path: artifacts/cli
+          merge-multiple: true
       - name: Attest build provenance
         id: attest
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
@@ -1085,6 +1186,7 @@ jobs:
             artifacts/nuget/*.nupkg
             artifacts/maven/*.jar
             artifacts/c-abi/*.tar.gz
+            artifacts/cli/*.tar.gz
       - name: Attach provenance bundle to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

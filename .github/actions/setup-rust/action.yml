@@ -3,7 +3,10 @@ description: >
   Install a Rust toolchain via dtolnay/rust-toolchain, retrying once after a
   short pause on the transient rustup CDN failure (a corrupt channel manifest /
   checksum mismatch on `channel-rust-<channel>.toml`) that rustup itself does
-  not retry — the same hardening already applied to setup-node / setup-go.
+  not retry. This is layer three of the flake defence: layer one is the
+  CARGO_NET_RETRY / npm_config_fetch_retries / PIP_RETRIES block at the top of
+  each workflow, layer two is the retry wrapper around the network-heavy
+  install steps, and this is the toolchain install that neither reaches.
 
 inputs:
   toolchain:

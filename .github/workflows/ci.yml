@@ -18,6 +18,21 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Flake defence, layer one: make the tools themselves retry. This is the
+# cheapest and broadest of the three layers and it was the one missing here --
+# release.yml has carried it since it was written, while ci.yml, which runs on
+# every push and pull request and fetches from five registries across three
+# operating systems, did not. A manual re-run is a bug report against the
+# pipeline, not a workflow.
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_NET_RETRY: "10"
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  npm_config_fetch_retries: "5"
+  npm_config_fetch_retry_maxtimeout: "120000"
+  PIP_RETRIES: "5"
+  PIP_DEFAULT_TIMEOUT: "120"
+
 jobs:
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.features }})
@@ -181,9 +196,26 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - name: Set up Python
+        id: setup_python
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Wait before the Python retry
+        if: steps.setup_python.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Python failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Python (retry)
+        if: steps.setup_python.outcome == 'failure'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The hash-pinned lock, not a bare `pip install maturin pytest`. The
@@ -210,11 +242,30 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Node
+        id: setup_node
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: bindings/node/package-lock.json
+
+      - name: Wait before the Node retry
+        if: steps.setup_node.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Node failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Node (retry)
+        if: steps.setup_node.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: bindings/node/package-lock.json
+
       # npm install (not npm ci): the per-platform optionalDependencies point at
       # native packages that are not published until the first release.
       - name: Install Node dependencies
@@ -287,10 +338,28 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      - name: Set up Go
+        id: setup_go
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "stable"
           cache: false
+
+      - name: Wait before the Go retry
+        if: steps.setup_go.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Go failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Go (retry)
+        if: steps.setup_go.outcome == 'failure'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
@@ -347,9 +416,26 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      - name: Set up .NET
+        id: setup_dotnet
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
+
+      - name: Wait before the .NET retry
+        if: steps.setup_dotnet.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up .NET failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up .NET (retry)
+        if: steps.setup_dotnet.outcome == 'failure'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+
       # The test project copies the native library from target/release (see the
       # <Content> items), so build it in the release profile here.
       - name: Build the C ABI library
@@ -374,11 +460,30 @@ jobs:
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
         run: cargo build -p wickra-synth-c
-      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+      - name: Set up Java
+        id: setup_java
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
+
+      - name: Wait before the Java retry
+        if: steps.setup_java.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Java failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Java (retry)
+        if: steps.setup_java.outcome == 'failure'
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
       - name: Test the Java binding
         run: mvn -B -f bindings/java test
 
@@ -401,10 +506,28 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-synth-c --release
-      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+      - name: Set up R
+        id: setup_r
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
         with:
           r-version: "release"
           use-public-rspm: true
+
+      - name: Wait before the R retry
+        if: steps.setup_r.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up R failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up R (retry)
+        if: steps.setup_r.outcome == 'failure'
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
       - name: Install and test the R binding
         shell: bash
         # github.workspace is a backslash path on Windows; Makevars(.win) (sh) and
@@ -625,25 +748,130 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Node
+        id: setup_node
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+
+      - name: Wait before the Node retry
+        if: steps.setup_node.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Node failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Node (retry)
+        if: steps.setup_node.outcome == 'failure'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Set up Python
+        id: setup_python
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+
+      - name: Wait before the Python retry
+        if: steps.setup_python.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Python failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Python (retry)
+        if: steps.setup_python.outcome == 'failure'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Set up Go
+        id: setup_go
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "stable"
           cache: false
-      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+
+      - name: Wait before the Go retry
+        if: steps.setup_go.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Go failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Go (retry)
+        if: steps.setup_go.outcome == 'failure'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+
+      - name: Set up .NET
+        id: setup_dotnet
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
-      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+
+      - name: Wait before the .NET retry
+        if: steps.setup_dotnet.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up .NET failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up .NET (retry)
+        if: steps.setup_dotnet.outcome == 'failure'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+
+      - name: Set up Java
+        id: setup_java
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+
+      - name: Wait before the Java retry
+        if: steps.setup_java.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up Java failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up Java (retry)
+        if: steps.setup_java.outcome == 'failure'
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Set up R
+        id: setup_r
+        continue-on-error: true # the CDN flakes; the retry below is the point
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
+      - name: Wait before the R retry
+        if: steps.setup_r.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::setting up R failed (likely a CDN flake), waiting 30s"
+          sleep 30
+
+      - name: Set up R (retry)
+        if: steps.setup_r.outcome == 'failure'
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
         with:
           r-version: "release"
           use-public-rspm: true

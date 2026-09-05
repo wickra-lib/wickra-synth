@@ -55,7 +55,7 @@ field or variant, not a closure. A new regime kind, price-walk parameter or
 microstructure knob is added to `crates/synth-core/src/spec.rs` and handled in
 the generation path, with a serde round-trip test and a golden fixture. All
 randomness must go through the core's portable PRNG so the byte-parity guarantee
-holds. See `docs/GENERATION.md`.
+holds. See `docs/GENSPEC.md`.
 
 ## Developer Certificate of Origin
 

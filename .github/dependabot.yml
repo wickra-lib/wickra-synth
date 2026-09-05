@@ -56,6 +56,25 @@ updates:
       node-binding:
         patterns: ["*"]
 
+  # The hash-pinned CI requirements. Nothing bumped them, so the lock only
+  # moved when somebody noticed -- and osv-scanner.toml already carries a
+  # reasoned suppression for an advisory in exactly this file, which is the
+  # class of thing this entry exists to surface.
+  - package-ecosystem: pip
+    directory: "/.github/requirements"
+    schedule:
+      interval: monthly
+      time: "06:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "deps(pip)"
+    groups:
+      ci-requirements:
+        patterns: ["*"]
+
   # Python binding pip dependencies.
   - package-ecosystem: pip
     directory: "/bindings/python"
