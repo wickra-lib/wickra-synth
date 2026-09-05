@@ -8,3 +8,5 @@
 ^src/wickra-synth-c$
 ^src/Makevars$
 ^\.gitignore$
+# Runs from the repository root against golden/, which no tarball contains.
+^golden_test\.R$

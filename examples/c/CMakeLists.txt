@@ -49,8 +49,9 @@ add_executable(gen gen.c)
 add_executable(genpp gen.cpp)
 add_executable(golden_test golden_test.c)
 add_executable(golden_testpp golden_test.cpp)
+add_executable(streaming_test streaming_test.c)
 
-set(WICKRA_SYNTH_EXAMPLES gen genpp golden_test golden_testpp)
+set(WICKRA_SYNTH_EXAMPLES gen genpp golden_test golden_testpp streaming_test)
 
 foreach(example ${WICKRA_SYNTH_EXAMPLES})
     target_include_directories(${example} PRIVATE "${WICKRA_SYNTH_INCLUDE}")

@@ -173,7 +173,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   green job means published rather than accepted — plus the `<scm>` and
   `<developers>` blocks Central validates for.
 
+- `examples/c/streaming_test.c` — the C ABI had a golden test and no
+  streaming one, so a divergence between `generate` and `generate_stream` would
+  have left every fixture passing while a consumer reading the stream saw a
+  different market.
+- `bindings/r/golden_test.R`, run by CI from the repository root and kept out of
+  the tarball. A shipped R test must not reason about the repository it came
+  from, and the corpus check did.
+- The release gate now requires CI to be green on the tagged commit, waiting up
+  to twenty minutes on undecided checks rather than reading a still-running one
+  as a failure.
+- `npm pack --dry-run` verifies the packed tarball carries the native addon and
+  the licence texts that `files` promises.
+
 ### Changed
+
+- `bindings/node/src/lib.rs` joins the CodeQL exclusions: napi-derive expands
+  each `#[napi]` into FFI glue and CodeQL attributes it back to the macro's
+  source span, one false `access-invalid-pointer` per exported class.
+- The pinned `uv` download moves to 0.12.10 with its published checksums.
+- `osv-scanner.toml` records GHSA-6w46-j5rx-g56g (pytest tmpdir handling) with
+  the assessment: the fix needs pytest 9, pytest 9 needs Python 3.10, and the
+  matrix covers 3.9 because that is the floor the abi3 wheel declares.
 
 - Every workflow job has a `timeout-minutes`. Nineteen had none and inherited
   GitHub's six-hour default, so a job wedged on a hung download held a runner
