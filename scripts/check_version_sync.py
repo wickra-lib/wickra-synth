@@ -43,7 +43,7 @@ NPM_PLATFORMS = [
 TOUCHPOINTS: list[tuple[str, str, int]] = [
     # The workspace version, and the path dependency that pins it.
     ("Cargo.toml", r'(?m)^version = "{v}"$', 1),
-    ("Cargo.toml", r'synth-core = \{{ version = "{v}"', 1),
+    ("Cargo.toml", r'wickra-synth-core = \{{ version = "{v}"', 1),
     # Python: maturin reads the version from pyproject, not from Cargo.toml.
     ("bindings/python/pyproject.toml", r'(?m)^version = "{v}"$', 1),
     # Node: the package itself plus one optional dependency per platform.

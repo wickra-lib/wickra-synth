@@ -1,6 +1,6 @@
 //! Deterministic synthetic market-microstructure engine.
 //!
-//! `synth-core` turns a data-driven [`GenSpec`] into OHLCV [`Candle`]s plus
+//! `wickra-synth-core` turns a data-driven [`GenSpec`] into OHLCV [`Candle`]s plus
 //! [`BookSnapshot`]s, [`Trade`]s and [`FundingSample`]s. All randomness flows
 //! through one portable PRNG ([`DetRng`], seeded by SplitMix64), and nowhere
 //! else, so a given seed yields the **byte-identical** stream on every platform

@@ -1,7 +1,7 @@
 # Wickra Synth — C ABI
 
 The C ABI is the hub every C-capable language (C, C++, C#, Go, Java, R) links
-against. It exposes `synth-core` as a tiny, JSON-shaped surface built as
+against. It exposes `wickra-synth-core` as a tiny, JSON-shaped surface built as
 both a `cdylib` (dynamic library) and a `staticlib`.
 
 ## Surface

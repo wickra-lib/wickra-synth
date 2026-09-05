@@ -5,7 +5,7 @@
 //! and must always produce a finite, well-formed output.
 
 use libfuzzer_sys::fuzz_target;
-use synth_core::{generate, FundingSpec, GenSpec, Microstructure, Regime, RegimeKind};
+use wickra_synth_core::{generate, FundingSpec, GenSpec, Microstructure, Regime, RegimeKind};
 
 fn byte(data: &[u8], i: usize) -> u8 {
     data.get(i).copied().unwrap_or(0)

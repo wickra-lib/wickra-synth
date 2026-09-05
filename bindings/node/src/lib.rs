@@ -8,7 +8,7 @@ use napi_derive::napi;
 
 /// A synth driven by JSON commands.
 #[napi]
-pub struct Synth(synth_core::Synth);
+pub struct Synth(wickra_synth_core::Synth);
 
 #[napi]
 impl Synth {
@@ -16,7 +16,7 @@ impl Synth {
     #[napi(constructor)]
     #[allow(clippy::needless_pass_by_value)]
     pub fn new(spec_json: String) -> napi::Result<Self> {
-        synth_core::Synth::new(&spec_json)
+        wickra_synth_core::Synth::new(&spec_json)
             .map(Synth)
             .map_err(|e| napi::Error::from_reason(e.to_string()))
     }
@@ -33,6 +33,6 @@ impl Synth {
     /// The crate version.
     #[napi]
     pub fn version(&self) -> &'static str {
-        synth_core::Synth::version()
+        wickra_synth_core::Synth::version()
     }
 }

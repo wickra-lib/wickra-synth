@@ -3,7 +3,7 @@
 use std::fmt::Write as _;
 use std::fs;
 
-use synth_core::{
+use wickra_synth_core::{
     generate, generate_stream, Candle, Event, GenOutput, GenSpec, Microstructure, Regime,
     RegimeKind,
 };
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn json_format_matches_generate_byte_for_byte() {
-        use synth_core::{generate, GenSpec, Microstructure, Regime, RegimeKind};
+        use wickra_synth_core::{generate, GenSpec, Microstructure, Regime, RegimeKind};
         let out = run(&quick_args(Format::Json, false)).unwrap();
         let spec = GenSpec {
             seed: 42,
@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn csv_round_trips_through_wickra_data() {
-        use synth_core::{generate, GenSpec, Microstructure, Regime, RegimeKind};
+        use wickra_synth_core::{generate, GenSpec, Microstructure, Regime, RegimeKind};
         let spec = GenSpec {
             seed: 7,
             bars: 8,

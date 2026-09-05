@@ -164,7 +164,7 @@ jobs:
           echo "every workflow that ran on this commit is green"
 
   # --------------------------------------------------------------------------
-  # crates.io: synth-core then the wickra-synth crate (wickra-synth binary)
+  # crates.io: wickra-synth-core then the wickra-synth crate (wickra-synth binary)
   # --------------------------------------------------------------------------
   cargo-publish:
     name: Publish to crates.io
@@ -181,13 +181,13 @@ jobs:
 
       # Idempotent publishing: if the version is already on crates.io we treat
       # that as success so re-runs of the workflow do not fail.
-      - name: Publish synth-core (idempotent)
+      - name: Publish wickra-synth-core (idempotent)
         run: |
           set -uo pipefail
-          if out=$(cargo publish -p synth-core --token "$CARGO_REGISTRY_TOKEN" 2>&1); then
+          if out=$(cargo publish -p wickra-synth-core --token "$CARGO_REGISTRY_TOKEN" 2>&1); then
             echo "$out"
           elif echo "$out" | grep -q "already uploaded\|already exists"; then
-            echo "skip: synth-core is already published at this version"
+            echo "skip: wickra-synth-core is already published at this version"
           else
             echo "$out"
             exit 1
@@ -215,7 +215,7 @@ jobs:
       # Produce .crate files for the GitHub Release attachments.
       - name: Build .crate files for release attachment
         run: |
-          cargo package -p synth-core
+          cargo package -p wickra-synth-core
           cargo package -p wickra-synth
 
       - name: Upload .crate files
@@ -234,7 +234,7 @@ jobs:
         run: |
           cargo cyclonedx --format json --top-level
           mkdir -p sboms
-          cp crates/synth-core/synth-core.cdx.json sboms/
+          cp crates/synth-core/wickra-synth-core.cdx.json sboms/
           cp crates/synth-cli/wickra-synth.cdx.json sboms/
           ls -lh sboms/
 
@@ -273,7 +273,7 @@ jobs:
       - name: Sync root README into bindings/python so it ships with the wheel
         shell: bash
         run: cp README.md bindings/python/README.md
-      # The Python binding depends only on synth-core, which is generation and
+      # The Python binding depends only on wickra-synth-core, which is generation and
       # serialization with no native networking, so the manylinux/musllinux
       # containers build the wheel with no extra system dependencies.
       # ci.yml proves that in both containers on every pull request; without

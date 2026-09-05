@@ -2,7 +2,7 @@
 //! the event stream back into a `GenOutput` and it must serialize byte-for-byte
 //! identically to the batch `generate` — the streaming path must never diverge.
 
-use synth_core::{generate, generate_stream, Event, GenOutput, GenSpec};
+use wickra_synth_core::{generate, generate_stream, Event, GenOutput, GenSpec};
 
 fn specs() -> Vec<&'static str> {
     vec![

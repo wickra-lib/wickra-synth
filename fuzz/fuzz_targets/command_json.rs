@@ -5,7 +5,7 @@
 //! `{"ok":false,...}` JSON — it must never panic and never return `Err`.
 
 use libfuzzer_sys::fuzz_target;
-use synth_core::Synth;
+use wickra_synth_core::Synth;
 
 const SPEC: &str = r#"{ "seed": 42, "bars": 8, "start_price": 100.0,
     "regimes": [{ "kind": "trend", "len": 8, "drift": 0.002, "vol": 0.01 }],

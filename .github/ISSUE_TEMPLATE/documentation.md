@@ -9,7 +9,7 @@ labels: documentation
 
 <!--
 A path or a link: README.md, docs/DETERMINISM.md, docs/Cookbook.md, the rustdoc
-for `synth_core::generate`, examples/python/gen.py.
+for `wickra_synth_core::generate`, examples/python/gen.py.
 -->
 
 ## What is wrong

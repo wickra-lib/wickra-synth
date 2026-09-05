@@ -18,7 +18,7 @@ in ten languages. The default template is right for everything else.
 <!--
 Answer one of:
 
-  * No. `cargo test -p synth-core --test golden` passes untouched.
+  * No. `cargo test -p wickra-synth-core --test golden` passes untouched.
   * Yes, and `golden/expected/*.json` is re-blessed in this PR.
 
 If yes, say which fixtures moved and why the new bytes are the right ones. A
@@ -32,7 +32,7 @@ its own commit with the reasoning in the message, not folded into a refactor.
 Tick what this PR changes. Anything crossing `command_json` reaches all ten.
 -->
 
-- [ ] `synth-core`
+- [ ] `wickra-synth-core`
 - [ ] CLI (`wickra-synth`)
 - [ ] C ABI (`bindings/c`, header + hull)
 - [ ] Python
@@ -47,7 +47,7 @@ Tick what this PR changes. Anything crossing `command_json` reaches all ten.
 
 ## Determinism
 
-- [ ] No new source of randomness outside `synth-core::rng`
+- [ ] No new source of randomness outside `wickra-synth-core::rng`
 - [ ] The per-bar draw order is unchanged, or `docs/DETERMINISM.md` is updated with it
 - [ ] The spec stays data (a serde `GenSpec`), never Rust closures
 

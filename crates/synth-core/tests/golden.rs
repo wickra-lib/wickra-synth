@@ -6,7 +6,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use synth_core::{generate, GenSpec};
+use wickra_synth_core::{generate, GenSpec};
 
 fn golden_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../golden")

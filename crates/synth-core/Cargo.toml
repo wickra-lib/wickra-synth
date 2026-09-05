@@ -1,11 +1,11 @@
-# synth-core — the deterministic synthetic-microstructure engine.
+# wickra-synth-core — the deterministic synthetic-microstructure engine.
 #
 # A serde `GenSpec` plus a portable seeded PRNG (SplitMix64 -> xoshiro256++)
 # produce OHLCV candles plus order-book snapshots, trades and funding, exposed
 # through a single `command_json` boundary so every language binding draws the
 # byte-identical synthetic market for a given seed.
 [package]
-name = "synth-core"
+name = "wickra-synth-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

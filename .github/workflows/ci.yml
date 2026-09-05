@@ -556,7 +556,7 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 30 # backstop: an instrumented build of synth-core plus the upload
+    timeout-minutes: 30 # backstop: an instrumented build of wickra-synth-core plus the upload
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -569,11 +569,11 @@ jobs:
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
           tool: cargo-llvm-cov
-      # The determinism moat lives in synth-core: the fold, the label
+      # The determinism moat lives in wickra-synth-core: the fold, the label
       # formulas, canonical serialization and scaling. Measure it in isolation so
       # patch coverage tracks the core.
       - name: Generate coverage (lcov)
-        run: cargo llvm-cov -p synth-core --all-features --lcov --output-path lcov.info
+        run: cargo llvm-cov -p wickra-synth-core --all-features --lcov --output-path lcov.info
       - name: Upload to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
@@ -690,7 +690,7 @@ jobs:
             echo "::endgroup::"
           done <<< "$targets"
 
-  # synth-core is a published library, so its public API is a promise. Nothing
+  # wickra-synth-core is a published library, so its public API is a promise. Nothing
   # checked whether a change kept it.
   semver:
     name: Public API (cargo-semver-checks)
@@ -713,7 +713,7 @@ jobs:
         with:
           tool: cargo-semver-checks
 
-      # synth-core only, and named rather than --workspace. The bench and binding
+      # wickra-synth-core only, and named rather than --workspace. The bench and binding
       # crates are not published; wickra-synth is a binary with no library
       # target, so it exposes no Rust API to keep a promise about. That leaves
       # exactly one crate whose surface a consumer can depend on.
@@ -724,7 +724,7 @@ jobs:
       - name: Check the published crates
         run: |
           set -uo pipefail
-          out=$(cargo semver-checks check-release -p synth-core 2>&1) && status=0 || status=$?
+          out=$(cargo semver-checks check-release -p wickra-synth-core 2>&1) && status=0 || status=$?
           echo "$out"
           if [ "$status" -ne 0 ] && echo "$out" | grep -qiE "no.*baseline|not found in registry|does not exist"; then
             echo "::notice::no published baseline yet -- semver has nothing to compare against"

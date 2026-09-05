@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   language (Rust, Python, Node.js, C, C++, Go, C#, Java, R), each printing the
   same first three candles from seed 42 — a visible cross-language-equality
   proof.
-- `synth-core` tests: `conformance` (serde round-trip of every spec/output type;
+- `wickra-synth-core` tests: `conformance` (serde round-trip of every spec/output type;
   unknown/missing fields and unknown regime kinds are rejected), `golden`
   (byte-exact against `golden/expected`), `stream_eq_batch` (the reassembled
   event stream equals the batch output), `rng_vectors` (fixed SplitMix64 /
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`deny_unknown_fields`) so a typo'd spec is an error, not silently ignored.
 - `golden/`: the cross-language golden corpus — five `specs/*.json` (trend,
   range, crash, vol, mixed) and their byte-exact `expected/*.json` `GenOutput`
-  fixtures, blessed from `synth-core::generate`. Every language binding replays
+  fixtures, blessed from `wickra-synth-core::generate`. Every language binding replays
   the specs and must reproduce the expected output byte-for-byte. No `data/`
   directory: the seed is the complete input.
 - `bindings/r`: R bindings (`wickrasynth`) over the C ABI hub via `.Call`, with
@@ -78,19 +78,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   functions (`wickra_synth_{new,command,free,version}`) expose the
   `command_json` surface through a caller-owned length-out buffer protocol; the
   cbindgen header `include/wickra_synth.h` is committed and drift-checked.
-- `wickra-synth` (CLI): the reference `synth-core` consumer. Loads a `GenSpec`
+- `wickra-synth` (CLI): the reference `wickra-synth-core` consumer. Loads a `GenSpec`
   from a `.json`/`.toml` file or the quick-spec flags, generates the batch or
   streamed output, and prints it as a text summary, JSON (byte-identical to
   `generate`), or CSV (`timestamp,open,high,low,close,volume`, read-back
   verified against the ecosystem CSV reader).
-- `synth-core`: the data-driven generation engine. A serde `GenSpec` (regimes,
+- `wickra-synth-core`: the data-driven generation engine. A serde `GenSpec` (regimes,
   microstructure, optional funding) plus a portable seeded PRNG (SplitMix64 →
   xoshiro256++, all randomness in the core) produce OHLCV candles, order-book
   snapshots, trades and funding. Exposed through `generate` (batch),
   `generate_stream` (event list — same draws, same order), and the `Synth`
   handle's single `command_json` boundary. An optional `validate` feature runs
   the wickra-core indicators over the output as a sanity check.
-- Repository scaffolding: Cargo workspace, the `synth-core` crate stub,
+- Repository scaffolding: Cargo workspace, the `wickra-synth-core` crate stub,
   supply-chain configuration (`deny.toml`, `osv-scanner.toml`, `lychee.toml`),
   lint configuration (`clippy.toml`), `repo-metadata.toml`, governance docs, the
   `.github` tree (issue/PR templates, `setup-rust`, `sync-metadata.py`,
@@ -129,7 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/` are contracts the tests enforce.
 - `bindings/csharp/README.md`, the developer view of that directory (the file
   NuGet renders stays one level down).
-- Licence texts beside every published package: `synth-core`, `wickra-synth`,
+- Licence texts beside every published package: `wickra-synth-core`, `wickra-synth`,
   and the Python, Node and WebAssembly bindings. The npm manifests list them in
   `files`; wasm-pack had been reporting their absence on every build.
 - `README.md`: `Project layout`, `Building everything from source`, `Testing`
@@ -143,7 +143,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Seven CI jobs the pipeline was missing: `fuzz-smoke` (all four targets, 30 s
   each, list derived from `cargo fuzz list`), `binding-surface` (the five
-  invariant scripts), `semver` (`cargo-semver-checks` on `synth-core`),
+  invariant scripts), `semver` (`cargo-semver-checks` on `wickra-synth-core`),
   `examples-smoke` (every example actually run, in all ten reaches),
   `python-wheel-container-smoke` (manylinux and musllinux), a non-blocking
   `links` copy of the weekly lychee run, and `osv-scan`.
@@ -219,12 +219,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- The `parallel` feature and the rayon dependency. `synth-core` declared
+- The `parallel` feature and the rayon dependency. `wickra-synth-core` declared
   `default = ["parallel"]` and pulled in rayon, but no code path ever used it:
   generation is sequential by construction — one PRNG stream, one fixed draw
   order — so bar N cannot be produced before bar N-1. The feature compiled rayon
   into every default build, and the bench crate documented a "parallel engine"
-  and a "single-threaded path" that were the same code. `synth-core` now
+  and a "single-threaded path" that were the same code. `wickra-synth-core` now
   declares no default features; `validate` is unchanged.
 - The unused `rust_decimal` workspace dependency. Prices and quantities are
   `f64` rounded through `round_to`; nothing in the workspace used the crate.

@@ -21,7 +21,7 @@ request as the code, never after it.
 ## What is not here
 
 - **The API reference** is rustdoc, published per release at
-  [docs.rs/synth-core](https://docs.rs/synth-core).
+  [docs.rs/wickra-synth-core](https://docs.rs/wickra-synth-core).
 - **Runnable code** lives in [`../examples/`](../examples/), one per language,
   all printing the same three candles from seed 42.
 - **The project page** is built from the separate

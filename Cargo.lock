@@ -1143,19 +1143,7 @@ version = "0.1.0"
 dependencies = [
  "codspeed-criterion-compat",
  "serde_json",
- "synth-core",
-]
-
-[[package]]
-name = "synth-core"
-version = "0.1.0"
-dependencies = [
- "proptest",
- "serde",
- "serde_json",
- "thiserror",
- "toml",
- "wickra-core",
+ "wickra-synth-core",
 ]
 
 [[package]]
@@ -1382,15 +1370,27 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "serde_json",
- "synth-core",
  "wickra-data",
+ "wickra-synth-core",
 ]
 
 [[package]]
 name = "wickra-synth-c"
 version = "0.1.0"
 dependencies = [
- "synth-core",
+ "wickra-synth-core",
+]
+
+[[package]]
+name = "wickra-synth-core"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "toml",
+ "wickra-core",
 ]
 
 [[package]]
@@ -1398,7 +1398,7 @@ name = "wickra-synth-example"
 version = "0.1.0"
 dependencies = [
  "serde_json",
- "synth-core",
+ "wickra-synth-core",
 ]
 
 [[package]]
@@ -1408,7 +1408,7 @@ dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
- "synth-core",
+ "wickra-synth-core",
 ]
 
 [[package]]
@@ -1416,15 +1416,15 @@ name = "wickra-synth-python"
 version = "0.1.0"
 dependencies = [
  "pyo3",
- "synth-core",
+ "wickra-synth-core",
 ]
 
 [[package]]
 name = "wickra-synth-wasm"
 version = "0.1.0"
 dependencies = [
- "synth-core",
  "wasm-bindgen",
+ "wickra-synth-core",
 ]
 
 [[package]]

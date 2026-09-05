@@ -4,7 +4,7 @@
 //! byte-identical output.
 
 use proptest::prelude::*;
-use synth_core::{generate, GenSpec, Microstructure, Regime, RegimeKind};
+use wickra_synth_core::{generate, GenSpec, Microstructure, Regime, RegimeKind};
 
 fn kind_strategy() -> impl Strategy<Value = RegimeKind> {
     prop_oneof![
@@ -39,7 +39,7 @@ prop_compose! {
                 book_depth,
                 spread_bps,
                 trade_rate,
-                funding: with_funding.then_some(synth_core::FundingSpec {
+                funding: with_funding.then_some(wickra_synth_core::FundingSpec {
                     interval_bars: 2,
                     base_rate: 0.0001,
                     sensitivity: 0.5,

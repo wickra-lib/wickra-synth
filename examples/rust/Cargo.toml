@@ -15,5 +15,5 @@ name = "gen"
 path = "src/main.rs"
 
 [dependencies]
-synth-core = { workspace = true }
+wickra-synth-core = { workspace = true }
 serde_json = { workspace = true }

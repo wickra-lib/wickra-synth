@@ -27,7 +27,7 @@ use core::ffi::{c_char, CStr};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
 
-use synth_core::Synth;
+use wickra_synth_core::Synth;
 
 /// A required pointer argument (`handle` or `cmd_json`) was null.
 pub const WICKRA_SYNTH_ERR_NULL: i32 = -1;

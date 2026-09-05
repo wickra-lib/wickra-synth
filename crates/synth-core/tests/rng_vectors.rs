@@ -6,7 +6,7 @@
 //! language must reproduce them, and any change to the arithmetic here would
 //! silently break parity across all ten bindings.
 
-use synth_core::{mix, DetRng, SplitMix64};
+use wickra_synth_core::{mix, DetRng, SplitMix64};
 
 #[test]
 fn splitmix64_reference_vector() {

@@ -12,7 +12,7 @@
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-use synth_core::Synth;
+use wickra_synth_core::Synth;
 
 /// A synth driven by JSON commands.
 ///

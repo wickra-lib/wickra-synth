@@ -1,6 +1,6 @@
 //! The deterministic, portable PRNG — the moat of the whole project.
 //!
-//! All randomness in `synth-core` flows through this module, and nowhere else:
+//! All randomness in `wickra-synth-core` flows through this module, and nowhere else:
 //! no language binding ever draws its own randomness, so a given seed produces
 //! the byte-identical stream on every platform and in every language. The
 //! generator is a [`SplitMix64`] seed expander feeding a [`DetRng`]

@@ -1,7 +1,7 @@
 //! The `wickra-synth` reference CLI.
 //!
 //! Loads a `GenSpec` (from a file or the quick-spec flags), generates the batch
-//! or streamed output through `synth-core`, and prints it as text, JSON, or CSV.
+//! or streamed output through `wickra-synth-core`, and prints it as text, JSON, or CSV.
 
 mod args;
 mod run;

@@ -40,4 +40,4 @@ similar_names = "allow"
 [dependencies]
 # The core. The `validate` feature is deliberately off across the
 # JSON-over-C-ABI boundary — the hub forwards, it does not second-guess.
-synth-core = { workspace = true }
+wickra-synth-core = { workspace = true }

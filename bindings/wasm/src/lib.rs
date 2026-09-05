@@ -12,7 +12,7 @@
 
 use wasm_bindgen::prelude::*;
 
-use synth_core::Synth as CoreSynth;
+use wickra_synth_core::Synth as CoreSynth;
 
 /// A synth driven by JSON commands.
 #[wasm_bindgen]
