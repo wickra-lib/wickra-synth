@@ -15,9 +15,30 @@
 
   <licenses>
     <license>
-      <name>MIT OR Apache-2.0</name>
+      <name>MIT</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+      <distribution>repo</distribution>
     </license>
   </licenses>
+
+  <developers>
+    <developer>
+      <id>kingchenc</id>
+      <name>kingchenc</name>
+      <url>https://github.com/kingchenc</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/wickra-lib/wickra-synth.git</connection>
+    <developerConnection>scm:git:https://github.com/wickra-lib/wickra-synth.git</developerConnection>
+    <url>https://github.com/wickra-lib/wickra-synth</url>
+  </scm>
 
   <properties>
     <maven.compiler.release>22</maven.compiler.release>
@@ -60,4 +81,95 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!--
+      Release profile (CI only). `release.yml` runs `mvn -Prelease deploy`, and
+      until this profile existed Maven matched nothing, warned, and deployed a
+      bare jar: no sources, no javadoc, no signatures, no publishing plugin.
+      Central rejects all four, so the release job could only ever have failed,
+      and only after the tag, which is irreversible.
+
+      The native libraries are unpacked from the wickra-synth-c-<triple>.tar.gz
+      release assets into src/main/resources/native/<os>-<arch>/ before deploy,
+      so the published jar carries every platform's library.
+    -->
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.4.0</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals><goal>jar-no-fork</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.12.0</version>
+            <configuration>
+              <doclint>none</doclint>
+              <quiet>true</quiet>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals><goal>jar</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.8</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals><goal>sign</goal></goals>
+                <configuration>
+                  <!-- Non-interactive signing on CI: modern GPG needs loopback
+                       pinentry to take the passphrase from the environment
+                       without a TTY. -->
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.11.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>true</autoPublish>
+              <!-- Wait for the deployment to be *published*, not merely
+                   validated. Without this the plugin stops at validation and
+                   prints "to finish publishing visit ...", so the job reports
+                   success while the artifact is not on the repository and
+                   anything that fails after validation is invisible here. It
+                   does not change whether the artifact publishes; autoPublish
+                   does that. It changes only what a green job means. Note it
+                   waits for the portal's published state, not for the repo1
+                   mirror, which lags separately. -->
+              <waitUntil>published</waitUntil>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
