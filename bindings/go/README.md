@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.webp?v=514" alt="Wickra Synth — deterministic synthetic market microstructure: OHLCV, order book, trades and funding from a single seed, byte-identical across ten languages" width="100%"></a>
+</p>
+
 # Wickra Synth — Go
 
 Go bindings for the Wickra synthetic-microstructure generator over its C ABI hub
