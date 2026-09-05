@@ -1,0 +1,7 @@
+# cargo-fuzz build output and campaign state. The lockfile is NOT ignored here:
+# a detached workspace with an ignored Cargo.lock resolves differently on every
+# machine, and the /fuzz Dependabot entry has nothing to update.
+target/
+corpus/
+artifacts/
+coverage/

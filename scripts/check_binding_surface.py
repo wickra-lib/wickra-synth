@@ -83,6 +83,18 @@ SURFACE: dict[str, dict[str, str | None]] = {
         "free": r"public void close\(",
         "version": r"version\(",
     },
+    # C++ is the tenth reach and travels inside the C binding as a header-only
+    # hull rather than its own directory, which is why it was missed. It is
+    # hand-written, so a dropped method is exactly the failure this file exists
+    # for: examples/c/golden_test.cpp would catch a behavioural regression, and
+    # nothing would catch a removed `version()`.
+    "cpp": {
+        "file": "bindings/c/include/wickra_synth.hpp",
+        "new": r"explicit Synth\(",
+        "command": r"std::string command\(",
+        "free": r"~Synth\(\)",
+        "version": r"static std::string version\(",
+    },
     "r": {
         "file": "bindings/r/NAMESPACE",
         "new": r"export\(wksynth_new\)",

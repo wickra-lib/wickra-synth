@@ -74,6 +74,12 @@ TOUCHPOINTS += [
 ]
 
 # Deliberately not touchpoints, so nobody adds them later after a fruitless grep:
+#   bindings/node/index.js          -- napi writes the version into the loader's
+#                                      error paths, 52 times. It is generated and
+#                                      committed, and ci.yml regenerates it and
+#                                      diffs, so a stale literal is already a red
+#                                      build. Counting it here would duplicate a
+#                                      stronger check with a weaker one.
 #   examples/csharp/Gen/Gen.csproj  -- <ProjectReference>, carries no version
 #   examples/go/go.mod              -- replace directive, carries no version
 #   CITATION.cff                    -- no version field until the first release

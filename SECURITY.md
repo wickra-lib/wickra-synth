@@ -35,11 +35,20 @@ reporters who wish to be named once a fix ships.
 ## Scope
 
 In scope: memory-safety or panic-across-FFI flaws in the C ABI hub and its
-buffer protocol, denial-of-service through a hostile `GenSpec` or dataset (for
-example unbounded allocation while parsing), and any input that makes a binding
-return a corrupted or non-deterministic report. Out of scope: incorrect indicator
-mathematics (a functional bug, not a vulnerability) and advisories in third-party
-crates that are already tracked and triaged.
+buffer protocol; a `GenSpec` that passes `GenSpec::validate` and then panics,
+wraps, or produces a non-deterministic or malformed result; and any input that
+makes one binding disagree with another for the same seed.
+
+Out of scope: incorrect generation mathematics (a functional bug, not a
+vulnerability); advisories in third-party crates that are already tracked and
+triaged in [`osv-scanner.toml`](osv-scanner.toml); and the memory a spec asks
+for. That last one is worth stating plainly rather than leaving as an implied
+promise: `bars` and `book_depth` are the caller's own numbers, and generating a
+billion bars allocates a billion bars. The library rejects a spec that cannot
+work — a timeline that overflows `i64`, a zero depth, a non-finite parameter —
+and it does not second-guess a spec that merely asks for a lot. A process that
+accepts specs from an untrusted source has to bound them itself, the same way it
+would bound any other size it was handed.
 
 ## Vulnerability disclosure (VEX)
 

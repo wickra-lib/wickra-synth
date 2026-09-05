@@ -186,7 +186,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `npm pack --dry-run` verifies the packed tarball carries the native addon and
   the licence texts that `files` promises.
 
+- `docs/PROTOCOL.md` — the `command_json` boundary written down: the four
+  commands, their request and response envelopes, spec resolution, the per-bar
+  event order, and how a consumer detects failure (a successful `generate` has
+  no `ok` field, because the response is the data). It existed only in a `match`
+  arm, which made the Rust source the specification for the other nine
+  languages.
+- `docs/GENSPEC.md` now lists all fourteen validation rules with their messages,
+  and says which sizes are deliberately unbounded and why. One was documented.
+- `GenSpec::validate` is public. The validation rules are the input contract,
+  and a caller building a spec in code had no way to ask.
+- `bindings/r/man/` — four `.Rd` pages, and a `R CMD check` job in CI. The
+  package exported three functions with no documentation at all, and nothing ran
+  the check that says so; `R CMD INSTALL` compiles and loads but does not check,
+  and r-universe runs the check. It reports `Status: OK`.
+- `fuzz/README.md`, `fuzz/.gitignore`, and a committed `fuzz/Cargo.lock`. A
+  detached workspace with an ignored lockfile resolves differently on every
+  machine, and the `/fuzz` Dependabot entry had nothing to update.
+- Coverage measures `wickra-synth` (the CLI) alongside the core. It is
+  hand-written product code and the tool `golden/README.md` blesses the corpus
+  with; the blueprint's exclusion is for generated binding glue.
+- C++ joins `scripts/check_binding_surface.py`. It is the tenth reach, travels
+  inside the C binding as a header-only hull, and was checked by nothing but
+  compilation.
+
 ### Changed
+
+- Nine GitHub Actions move to the family's current pins, including
+  `github/codeql-action` v4.37.3 — v4.37.9 and `actions/setup-java` v5.6.0 —
+  v6.0.0.
+- `SECURITY.md`'s scope is accurate. It claimed unbounded allocation from a
+  hostile `GenSpec` as a vulnerability; `bars` and `book_depth` are the caller's
+  own sizes and generating a billion bars allocates a billion bars. What is in
+  scope is a spec that passes validation and then panics, wraps, or diverges
+  between bindings.
 
 - `bindings/node/src/lib.rs` joins the CodeQL exclusions: napi-derive expands
   each `#[napi]` into FFI glue and CodeQL attributes it back to the macro's
