@@ -48,8 +48,9 @@ thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 # C ABI header generation.
 cbindgen = "0.27"
-# Test/dev.
-criterion = "0.8"
+# Test/dev. criterion is not declared here: the one bench crate pulls
+# codspeed-criterion-compat under that name instead, so a workspace entry would
+# be an unused declaration that looks like the version in force.
 proptest = "1"
 
 [workspace.lints.rust]

@@ -39,15 +39,21 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
 
       # Idempotent publishing: if the version is already on crates.io we treat
       # that as success so re-runs of the workflow do not fail.
       - name: Publish synth-core (idempotent)
         run: |
-          out=$(cargo publish -p synth-core --token "$CARGO_REGISTRY_TOKEN" 2>&1) && echo "$out" \
-            || (echo "$out" | grep -q "already uploaded\|already exists" && echo "skip: already published" \
-                || (echo "$out"; exit 1))
+          set -uo pipefail
+          if out=$(cargo publish -p synth-core --token "$CARGO_REGISTRY_TOKEN" 2>&1); then
+            echo "$out"
+          elif echo "$out" | grep -q "already uploaded\|already exists"; then
+            echo "skip: synth-core is already published at this version"
+          else
+            echo "$out"
+            exit 1
+          fi
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
@@ -56,9 +62,15 @@ jobs:
 
       - name: Publish wickra-synth (idempotent)
         run: |
-          out=$(cargo publish -p wickra-synth --token "$CARGO_REGISTRY_TOKEN" 2>&1) && echo "$out" \
-            || (echo "$out" | grep -q "already uploaded\|already exists" && echo "skip: already published" \
-                || (echo "$out"; exit 1))
+          set -uo pipefail
+          if out=$(cargo publish -p wickra-synth --token "$CARGO_REGISTRY_TOKEN" 2>&1); then
+            echo "$out"
+          elif echo "$out" | grep -q "already uploaded\|already exists"; then
+            echo "skip: wickra-synth is already published at this version"
+          else
+            echo "$out"
+            exit 1
+          fi
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
@@ -123,9 +135,11 @@ jobs:
       - name: Sync root README into bindings/python so it ships with the wheel
         shell: bash
         run: cp README.md bindings/python/README.md
-      # The Python binding depends only on synth-core (pure canonicalization +
-      # hashing, no native networking), so the manylinux/musllinux containers
-      # build the wheel with no extra system dependencies.
+      # The Python binding depends only on synth-core, which is generation and
+      # serialization with no native networking, so the manylinux/musllinux
+      # containers build the wheel with no extra system dependencies.
+      # ci.yml proves that in both containers on every pull request; without
+      # that job this would be the first place a container-only failure showed.
       - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           working-directory: bindings/python
@@ -198,13 +212,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6.4.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
         with:
           node-version: "22"
       - uses: ./.github/actions/setup-rust
         with:
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
       # npm install (not ci): the per-platform optionalDependencies are not yet
       # published, so they are absent from the lock and npm ci would reject it.
       - name: Install Node deps
@@ -232,7 +246,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6.4.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
@@ -260,7 +274,8 @@ jobs:
           fail=0
           publish_dir() {
             local dir=$1
-            local pkg=$(basename "$dir")
+            local pkg
+            pkg=$(basename "$dir")
             local pkgname="wickra-synth-$pkg"
             local existing
             existing=$(npm view "$pkgname@$version" version 2>/dev/null)
@@ -348,14 +363,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6.4.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
       - uses: ./.github/actions/setup-rust
         with:
           targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
       - name: Install wasm-pack (latest, via prebuilt binary)
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
@@ -386,9 +401,15 @@ jobs:
       - name: Publish wickra-synth-wasm to npm (idempotent)
         working-directory: bindings/wasm/pkg
         run: |
-          out=$(npm publish --access public --provenance 2>&1) && echo "$out" \
-            || (echo "$out" | grep -q "You cannot publish over" && echo "skip: version already on npm" \
-                || (echo "$out"; exit 1))
+          set -uo pipefail
+          if out=$(npm publish --access public --provenance 2>&1); then
+            echo "$out"
+          elif echo "$out" | grep -q "You cannot publish over"; then
+            echo "skip: this version is already on npm"
+          else
+            echo "$out"
+            exit 1
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -417,7 +438,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
       - name: Build the CLI binary
         run: cargo build -p wickra-synth --release --target ${{ matrix.target }}
       - name: Package the binary
@@ -466,7 +487,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2 # zizmor: ignore[cache-poisoning] release-only, maintainer-triggered tag build
       - name: Build the C ABI library (cdylib + staticlib)
         run: cargo build -p wickra-synth-c --release --target ${{ matrix.target }}
       - name: Package header + libraries
@@ -775,7 +796,7 @@ jobs:
           find artifacts -type f -name "*.cdx.json" -exec cp {} release-assets/ \;
           find artifacts -type f -name "*.nupkg" -exec cp {} release-assets/ \;
           ls -lh release-assets/
-          echo "asset-count=$(ls release-assets/ | wc -l)"
+          echo "asset-count=$(find release-assets -type f | wc -l)"
       - name: Create / update the draft GitHub Release with assets
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:

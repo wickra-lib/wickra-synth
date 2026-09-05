@@ -57,9 +57,12 @@ TOUCHPOINTS: list[tuple[str, str, int]] = [
     ("bindings/csharp/WickraSynth/WickraSynth.csproj", r"<Version>{v}</Version>", 1),
     # R.
     ("bindings/r/DESCRIPTION", r"(?m)^Version: {v}$", 1),
-    # The example that consumes the published package by version.
+    # The example's own version. It depends on the binding by path
+    # (file:../../bindings/node), not by range, so there is no dependency
+    # version here to keep in step -- and there must not be: a range would send
+    # `npm install` to the registry for a package that does not exist until the
+    # first release, which is exactly how that example came to be unrunnable.
     ("examples/node/package.json", r'"version": "{v}"', 1),
-    ("examples/node/package.json", r'"wickra-synth": "\^{v}"', 1),
     # The supported-versions table.
     ("SECURITY.md", r"{v}", 1),
 ]

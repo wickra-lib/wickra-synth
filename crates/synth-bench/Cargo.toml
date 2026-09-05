@@ -16,7 +16,12 @@ workspace = true
 synth-core = { workspace = true }
 
 [dev-dependencies]
-criterion = { workspace = true }
+# Not the plain criterion: this is CodSpeed's drop-in replacement, pulled in
+# under the name `criterion` so the bench keeps its `use criterion::{...}` and
+# `criterion_main!`. Outside the CodSpeed runner it behaves as criterion does, so
+# `cargo bench` locally is unaffected -- and inside it, the benches are actually
+# instrumented. Without the alias they run and report nothing, silently.
+criterion = { package = "codspeed-criterion-compat", version = "5", features = ["html_reports"] }
 serde_json = { workspace = true }
 
 [[bench]]

@@ -25,7 +25,7 @@ const SPEC = JSON.stringify({
 const synth = new Synth(SPEC);
 const out = JSON.parse(synth.command(JSON.stringify({ cmd: "generate" })));
 
-console.log(`wickra-synth ${Synth.version ? Synth.version() : ""}`);
+console.log(`wickra-synth ${synth.version()}`);
 console.log(`bars: ${out.candles.length}`);
 console.log("first 3 candles:");
 for (const candle of out.candles.slice(0, 3)) {

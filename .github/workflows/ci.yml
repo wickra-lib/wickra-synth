@@ -1,13 +1,15 @@
 name: CI
 
-# Workspace CI. The synth core and the reference CLI make up the
-# workspace so far; the C ABI and the ten language bindings each add their own
-# job to this file as they land (P-FS-3). Every job here must stay green.
+# Workspace CI. Every reach this repository publishes has a job here, and every
+# job must stay green: the Rust workspace on three operating systems and both
+# feature sets, the C ABI hub, the nine bindings that consume it, the fuzz
+# targets, the examples, and the invariants no compiler checks.
 
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -25,6 +27,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         features: ["--all-features", "--no-default-features"]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop: three OS times two feature sets; the Windows link step is the slow one
     # The CLI binary (wickra-synth) and the C ABI cdylib
     # (wickra_synth) share a stem on Windows, so building both in one
     # --workspace pass can race on the same .pdb and trip LNK1201. Dropping debug
@@ -37,7 +40,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The PyO3 extension cdylib is built and tested by the `python` job via
       # maturin; the C ABI cdylib by the `c-abi` job. Exclude both here.
       - run: cargo build --workspace ${{ matrix.features }} --exclude wickra-synth-c --exclude wickra-synth-python
@@ -46,6 +49,7 @@ jobs:
   lint:
     name: Format & Clippy
     runs-on: ubuntu-latest
+    timeout-minutes: 20 # backstop: fmt plus clippy over the workspace on both feature sets
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -53,7 +57,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
@@ -61,6 +65,7 @@ jobs:
   msrv:
     name: MSRV workspace (1.86)
     runs-on: ubuntu-latest
+    timeout-minutes: 20 # backstop: a full cold build on the oldest supported toolchain
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -68,7 +73,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: "1.86"
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # Default features build. The Python binding needs maturin's platform link
       # flags and is built by the `python` job. The Node binding is Rust 1.88
       # (napi-build) and is gated by `msrv-node`. The core, CLI and C ABI stay at
@@ -78,6 +83,7 @@ jobs:
   msrv-node:
     name: MSRV node (1.88)
     runs-on: ubuntu-latest
+    timeout-minutes: 20 # backstop: the same, for the napi crate's higher floor
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -85,7 +91,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: "1.88"
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The Node binding's napi-build needs Rust >= 1.88, above the workspace
       # 1.86 minimum, so it gets its own MSRV gate.
       - run: cargo build -p wickra-synth-node
@@ -93,6 +99,7 @@ jobs:
   supply-chain:
     name: cargo-deny
     runs-on: ubuntu-latest
+    timeout-minutes: 15 # backstop: a cargo-deny download plus one advisory pass
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -105,6 +112,7 @@ jobs:
   cli:
     name: CLI smoke (quick-spec + spec file)
     runs-on: ubuntu-latest
+    timeout-minutes: 20 # backstop: one debug build and three invocations
     env:
       RUSTFLAGS: "-C debuginfo=0"
     steps:
@@ -112,7 +120,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo build -p wickra-synth
       # Exercise both input paths (quick-spec flags and a spec file) and both
       # output formats (human text and JSON). The JSON output must carry a
@@ -130,12 +138,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop: release build, cbindgen, and the CMake examples on three OS
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cbindgen
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
@@ -167,6 +176,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.9", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop: maturin builds the extension once per interpreter
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -175,8 +185,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
-      - run: pip install maturin pytest
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      # The hash-pinned lock, not a bare `pip install maturin pytest`. The
+      # lock existed and nothing installed it, so the pinning proved nothing
+      # and the job tested whatever resolved that morning.
+      - run: pip install --require-hashes -r .github/requirements/ci-dev.txt
       - run: maturin build --out dist
         working-directory: bindings/python
       - run: pip install --no-index --find-links bindings/python/dist wickra-synth
@@ -190,12 +203,13 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop: napi builds the addon once per Node version
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
@@ -218,6 +232,7 @@ jobs:
   wasm:
     name: WASM
     runs-on: ubuntu-latest
+    timeout-minutes: 30 # backstop: two wasm-pack builds plus the golden run
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -225,7 +240,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install wasm-pack
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
@@ -250,6 +265,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop: cgo links the C ABI on three OS
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -259,7 +275,7 @@ jobs:
           go-version: "stable"
           cache: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-synth-c --release
       - name: Vendored header in sync with the C ABI
@@ -307,12 +323,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 25 # backstop: restore, build and test on three OS
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: "8.0"
@@ -330,12 +347,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 25 # backstop: Maven resolves its plugin tree cold on three OS
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       # The pom points native.lib.dir at target/debug, so build the debug profile.
       - name: Build the C ABI library
         run: cargo build -p wickra-synth-c
@@ -354,6 +372,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30 # backstop: R CMD INSTALL compiles the glue and stages the library
     env:
       WKSYNTH_INC: ${{ github.workspace }}/bindings/c/include
       WKSYNTH_LIB: ${{ github.workspace }}/target/release
@@ -362,7 +381,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-rust
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Build the C ABI library
         run: cargo build -p wickra-synth-c --release
       - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
@@ -378,7 +397,11 @@ jobs:
           export WKSYNTH_INC="${WKSYNTH_INC//\\//}"
           export WKSYNTH_LIB="${WKSYNTH_LIB//\\//}"
           if command -v cygpath >/dev/null 2>&1; then
-            export PATH="$(cygpath -u "$WKSYNTH_LIB"):$PATH"
+            # Assigned separately: inside `export` the command substitution's
+            # exit status is masked, so a cygpath that failed would leave an
+            # empty entry on PATH and surface later as a missing library.
+            lib_unix=$(cygpath -u "$WKSYNTH_LIB")
+            export PATH="$lib_unix:$PATH"
           else
             export LD_LIBRARY_PATH="$WKSYNTH_LIB:$LD_LIBRARY_PATH"
             export DYLD_LIBRARY_PATH="$WKSYNTH_LIB:$DYLD_LIBRARY_PATH"
@@ -389,6 +412,7 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 30 # backstop: an instrumented build of synth-core plus the upload
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -396,7 +420,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
         with:
@@ -417,3 +441,336 @@ jobs:
           fail_ci_if_error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  # The invariants no compiler checks: the version in nineteen declarations
+  # across six package managers, the licence texts every published package
+  # claims, the links in the READMEs registries render, the surface every
+  # binding owes the C ABI, and the R wrapper against the ABI its DESCRIPTION
+  # names. Each of these failed silently until something downstream noticed.
+  binding-surface:
+    name: Binding surface parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Every binding exposes the whole C ABI
+        run: python3 scripts/check_binding_surface.py
+
+      # A bump that misses one declaration ships a package pinning a binary that
+      # was never published, and that surfaces on a user's machine after the tag,
+      # which is irreversible.
+      - name: Every version declaration agrees
+        run: python3 scripts/check_version_sync.py
+
+      # Each bindings/*/README.md is a published package's long description:
+      # PyPI, npm, NuGet, pkg.go.dev and r-universe render them with no
+      # repository around them, so a relative link is dead there while resolving
+      # fine on GitHub, and nothing says so.
+      - name: Binding READMEs link only to what travels with them
+        run: python3 scripts/check_readme_links.py
+
+      # An SPDX expression in a manifest is a reference to two documents, not the
+      # documents. cargo decides what to package from git, so the copies have to
+      # be committed -- and committed copies drift.
+      - name: Every published package carries its licence texts
+        run: python3 scripts/check_license_copies.py
+
+      # R is the one binding whose native half comes from a published release
+      # rather than from this tree (bindings/r/configure downloads the C ABI for
+      # DESCRIPTION's Version), so the pairing r-universe compiles is one our own
+      # R job never sees -- it builds against the header in the tree.
+      - name: Check the R wrapper against the released C ABI
+        run: python3 scripts/check_r_abi_skew.py
+
+  # Four fuzz targets were declared and none had ever been run. `cargo fuzz
+  # build` proves a target compiles, which is not the same as proving it
+  # survives input, and nothing here did the second. Time-boxed at 30 s per
+  # target: the goal is catching a regression in the harness, not discovering
+  # novel bugs -- long campaigns belong on dedicated infrastructure with a
+  # persistent corpus.
+  fuzz-smoke:
+    name: Fuzz (smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # backstop: four targets at 30 s plus building all of them
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install nightly Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          # Pinned rather than rolling: libfuzzer-sys needs nightly, and a
+          # nightly that regresses turns this job red for a reason that has
+          # nothing to do with this repository. Bump the date deliberately.
+          toolchain: nightly-2026-07-01
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        continue-on-error: true # the cache is an optimisation; never block on a stuck restore
+        timeout-minutes: 6
+        with:
+          workspaces: fuzz
+
+      - name: Install cargo-fuzz
+        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        timeout-minutes: 10 # fail fast on a stuck download instead of hanging the job
+        with:
+          tool: cargo-fuzz
+
+      # `fuzz run <target>` builds only that target, so building all of them
+      # first is what catches a target that has drifted out of sync with the
+      # core API.
+      - name: Build every fuzz target
+        run: cargo +nightly-2026-07-01 fuzz build --target x86_64-unknown-linux-gnu
+        working-directory: fuzz
+
+      # Derived from `cargo fuzz list`, not a hand-kept list of steps: a new
+      # target is fuzzed the moment it exists rather than the moment someone
+      # remembers to add a line here.
+      - name: Fuzz every target (30 s each)
+        working-directory: fuzz
+        run: |
+          set -euo pipefail
+          targets=$(cargo +nightly-2026-07-01 fuzz list)
+          if [ -z "$targets" ]; then
+            echo "::error::cargo fuzz list returned nothing -- no target would be fuzzed"
+            exit 1
+          fi
+          while read -r target; do
+            [ -n "$target" ] || continue
+            echo "::group::$target"
+            cargo +nightly-2026-07-01 fuzz run --target x86_64-unknown-linux-gnu "$target" -- -max_total_time=30
+            echo "::endgroup::"
+          done <<< "$targets"
+
+  # synth-core is a published library, so its public API is a promise. Nothing
+  # checked whether a change kept it.
+  semver:
+    name: Public API (cargo-semver-checks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # backstop: it builds rustdoc JSON for each crate and its baseline
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: ./.github/actions/setup-rust
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      - name: Install cargo-semver-checks
+        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        timeout-minutes: 10 # fail fast on a stuck download instead of hanging the job
+        with:
+          tool: cargo-semver-checks
+
+      # synth-core only, and named rather than --workspace. The bench and binding
+      # crates are not published; wickra-synth is a binary with no library
+      # target, so it exposes no Rust API to keep a promise about. That leaves
+      # exactly one crate whose surface a consumer can depend on.
+      #
+      # Until the first release there is no baseline at all, so a missing
+      # baseline is reported and does not fail -- a check that cannot run yet is
+      # not a check that passed.
+      - name: Check the published crates
+        run: |
+          set -uo pipefail
+          out=$(cargo semver-checks check-release -p synth-core 2>&1) && status=0 || status=$?
+          echo "$out"
+          if [ "$status" -ne 0 ] && echo "$out" | grep -qiE "no.*baseline|not found in registry|does not exist"; then
+            echo "::notice::no published baseline yet -- semver has nothing to compare against"
+            exit 0
+          fi
+          exit "$status"
+
+  # Every example, actually run. They are the code people copy, and until now
+  # only the Rust and C/C++ ones were built by anything: the Node, Python, Go,
+  # C#, Java, R and WebAssembly examples could have stopped compiling and no job
+  # would have noticed.
+  examples-smoke:
+    name: Examples (all ten reaches)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: "8.0"
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2.12.1
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        with:
+          tool: wasm-pack
+
+      # Both profiles: the C ABI consumers below link the release build, and the
+      # Java example resolves the debug one through the pom's native.lib.dir.
+      - name: Build the C ABI library
+        run: |
+          cargo build -p wickra-synth-c --release
+          cargo build -p wickra-synth-c
+
+      - name: Rust
+        run: cargo run -p wickra-synth-example
+
+      - name: C and C++
+        run: |
+          cmake -S examples/c -B examples/c/build
+          cmake --build examples/c/build --config Release
+          ./examples/c/build/gen
+          ./examples/c/build/genpp
+
+      - name: Python
+        run: |
+          pip install maturin
+          maturin build --release --out dist
+          pip install --no-index --find-links dist wickra-synth
+          python ../../examples/python/gen.py
+        working-directory: bindings/python
+
+      - name: Node.js
+        run: |
+          set -euo pipefail
+          cd bindings/node
+          npm install --no-audit --no-fund
+          npx napi build --platform --release
+          # The example depends on the binding by path, so this links the addon
+          # just built rather than reaching for the registry.
+          cd ../../examples/node
+          npm install --no-audit --no-fund
+          node gen.js
+
+      - name: WebAssembly
+        run: |
+          (cd bindings/wasm && wasm-pack build --target nodejs)
+          node examples/wasm/gen.mjs
+
+      - name: Go
+        run: |
+          set -euo pipefail
+          mkdir -p bindings/go/lib/linux_amd64
+          cp target/release/libwickra_synth.so bindings/go/lib/linux_amd64/
+          export LD_LIBRARY_PATH="$PWD/bindings/go/lib/linux_amd64:${LD_LIBRARY_PATH:-}"
+          cd examples/go && go run .
+
+      - name: C#
+        run: dotnet run --project examples/csharp/Gen -c Release
+
+      - name: Java
+        run: |
+          set -euo pipefail
+          mvn -B -q -f bindings/java package -DskipTests
+          javac -cp bindings/java/target/classes examples/java/Gen.java -d examples/java/out
+          java --enable-native-access=ALL-UNNAMED \
+               -Dnative.lib.dir=target/debug \
+               -cp "bindings/java/target/classes:examples/java/out" Gen
+
+      - name: R
+        env:
+          WKSYNTH_INC: ${{ github.workspace }}/bindings/c/include
+          WKSYNTH_LIB: ${{ github.workspace }}/target/release
+        run: |
+          set -euo pipefail
+          export LD_LIBRARY_PATH="$WKSYNTH_LIB:${LD_LIBRARY_PATH:-}"
+          R CMD INSTALL bindings/r
+          Rscript examples/r/gen.R
+
+  # The Linux wheels are built inside manylinux and musllinux containers, which
+  # are older and thinner than the runner. CI is otherwise blind to that: every
+  # Python job here builds on the runner itself, so a wheel that cannot be built
+  # in the container fails for the first time during the release, after the tag.
+  python-wheel-container-smoke:
+    name: Python wheel (${{ matrix.manylinux }} smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        manylinux: [auto, musllinux_1_2]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Sync root README into bindings/python so the build matches release
+        run: cp README.md bindings/python/README.md
+
+      # Keep the arguments in step with release.yml: what is proved here is only
+      # worth something if it is the same build.
+      - uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
+        with:
+          working-directory: bindings/python
+          target: x86_64
+          args: --release --strip --out dist
+          manylinux: ${{ matrix.manylinux }}
+
+  # Non-blocking external-link heads-up on pull requests. The authoritative check
+  # is the scheduled links.yml; here it only surfaces link rot early without ever
+  # gating a merge -- external sites rate-limit, move and go down, and none of
+  # that is a reason to block a change.
+  links:
+    name: External links (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --config lychee.toml --no-progress --root-dir "${{ github.workspace }}" "*.md" "docs/*.md" "examples/README.md" "bindings/*/README.md"
+          fail: true
+
+  # osv-scanner.toml existed and nothing read it. cargo-deny covers the Rust
+  # advisories; OSV also covers the npm, Maven, NuGet, Go and Python manifests,
+  # which is five of the ten reaches nothing was scanning at all.
+  osv-scan:
+    name: OSV scanner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install osv-scanner
+        uses: taiki-e/install-action@3d7d7cd5ac7f994c1892ae0c06165095b9139094 # v2.85.1
+        timeout-minutes: 10
+        with:
+          tool: osv-scanner
+
+      # --config is explicit: osv-scanner only picks the file up automatically
+      # from the directory it is scanning, and a config that is silently ignored
+      # is worse than no config, because the reasoning in it looks applied.
+      - name: Scan every manifest
+        run: osv-scanner scan source --config osv-scanner.toml --recursive .
