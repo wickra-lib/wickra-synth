@@ -69,7 +69,7 @@ Six of the ten — Rust, Python, Node.js, WebAssembly, Go and C# — print the
 version, the bar count, and the first three candles:
 
 ```text
-wickra-synth 0.1.0
+wickra-synth 0.1.1
 bars: 20
 first 3 candles:
   {"ts":1700000000,"open":100.0,"high":100.74470633,"low":99.19272168,"close":99.93141616,"volume":1362.45253483}
