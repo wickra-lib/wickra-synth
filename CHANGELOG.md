@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The npm publish asked whether the binaries had been moved, two steps before
+  moving them.** `Every platform package has its binary` reads
+  `npm/<platform>/`, which `napi artifacts` fills — and that step stood *after*
+  it, so the guard reported all six packages empty and the job failed on the
+  v0.1.0 tag. The two proofs were added after the step they depend on and had
+  never run against a real tag until then. `napi artifacts` now runs directly
+  after the artefact download, ahead of both proofs.
+
+  The guard did its job: it stopped six empty stubs from publishing, which is
+  not recoverable on npm. Everything else in the run went out — crates.io, PyPI,
+  Maven Central, NuGet, the Go mirror and `wickra-synth-wasm`.
+
 ## [0.1.0] - 2026-09-06
 
 ### Fixed

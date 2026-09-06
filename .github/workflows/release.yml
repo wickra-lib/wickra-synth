@@ -398,6 +398,15 @@ jobs:
       # The npm/<platform>/package.json templates are committed (bindings/node/npm/),
       # so `napi artifacts` only drops the freshly built .node binary into the
       # matching directory. napi-rs CLI 3 renamed `--dir` to `--output-dir`.
+      #
+      # This has to run before the two proofs below: they read npm/<platform>/,
+      # which is empty until this step fills it. Standing after them, the binary
+      # check could not pass on any tag -- it asked whether the move had happened
+      # two steps before the move.
+      - name: Move binaries into platform package layout
+        working-directory: bindings/node
+        run: npx napi artifacts --output-dir artifacts
+
       # Two proofs before anything irreversible. `napi artifacts` silently
       # leaves a directory empty when its artefact did not arrive, and `files`
       # silently drops a name that is not there -- so a stub that installs
@@ -444,10 +453,6 @@ jobs:
                 console.log(`${pkg.name}: licence texts present`);
               });'
           done
-
-      - name: Move binaries into platform package layout
-        working-directory: bindings/node
-        run: npx napi artifacts --output-dir artifacts
 
       - name: Publish platform packages (idempotent)
         working-directory: bindings/node
