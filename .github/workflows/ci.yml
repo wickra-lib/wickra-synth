@@ -289,7 +289,7 @@ jobs:
           cd bindings/node
           packed=$(npm pack --dry-run --json)
           echo "$packed" | grep -q '\.node' || {
-            echo '::error::npm pack produced no .node file, but package.json lists one in `files`'
+            echo '::error::npm pack produced no .node file, but package.json lists one under files'
             exit 1
           }
           echo "$packed" | grep -q 'LICENSE-MIT' || {
@@ -927,7 +927,10 @@ jobs:
 
       - name: Python
         run: |
-          pip install maturin
+          # The hash-pinned lock, for the same reason the test job above uses
+          # it: a bare `pip install maturin` resolves whatever PyPI serves that
+          # morning, so the lock beside it proved nothing here.
+          pip install --require-hashes -r ../../.github/requirements/ci-dev.txt
           maturin build --release --out dist
           pip install --no-index --find-links dist wickra-synth
           python ../../examples/python/gen.py

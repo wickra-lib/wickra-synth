@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`Lint workflows` was red on `main`, and every pull request inherited it.**
+  actionlint's shellcheck pass flagged SC2016 in the packed-tarball check: the
+  error message wrapped `files` in backticks inside a single-quoted string, which
+  shellcheck reads as an unexpanded command substitution. The word no longer
+  carries backticks.
+
+- **The examples job installed maturin unpinned.** `ci.yml` already carries the
+  reasoning one job above it — *"the hash-pinned lock, not a bare `pip install
+  maturin pytest`. The lock existed and nothing installed it, so the pinning
+  proved nothing"* — and the examples job did exactly that. It now installs
+  `--require-hashes -r .github/requirements/ci-dev.txt` like its neighbour.
+  (OpenSSF Scorecard `PinnedDependenciesID`.)
+
+- **`@napi-rs/cli` reached 3.8.6, with the generated loader it emits.**
+  `bindings/node/index.js` is generated and committed, and 3.8 emits a different
+  loader: bumping the manifests alone leaves the 590-line loader from 3.7 against
+  the new CLI, which fails at `Failed to load native binding` on Node 22 and 24.
+  The regenerated loader ships with the bump, and the lock pins 3.8.6 — the same
+  version `wickra-exchange` and `wickra-benchmark` run.
+
+### Changed
+
+- **Dependabot no longer offers a pytest major for the CI requirements.**
+  `ci-dev.txt` is compiled with `--python-version 3.9`, which is what lets one
+  lock cover the 3.9-through-3.13 matrix. Dependabot resolves against its own
+  interpreter and cannot see that floor, so it offered pytest 9.1.1
+  (`requires-python >=3.10`) and the three 3.9 jobs failed. The major is ignored
+  for that ecosystem; everything below it is still offered, and
+  `scripts/update-lockfiles.sh` — which does apply the floor — remains the way
+  the lock moves.
+
 ### Added
 
 - `docs/`: deep-dive documentation — `ARCHITECTURE.md` (workspace layout and the
