@@ -14,6 +14,17 @@ NuGet, the Go mirror and `wickra-synth-wasm`, then failed on the npm job before
 publishing the main package or its six platform packages — so `wickra-synth` has
 no 0.1.0 on npm, and there is no GitHub release for the tag.
 
+### Changed
+
+- **maturin reaches 1.15.0, the version the four sibling repos run.** Dependabot
+  offered it twice and could not carry it: on Python 3.9 maturin 1.15.0 requires
+  `tomli` (3.11+ has `tomllib` in the stdlib), and rewriting the maturin line
+  alone leaves that requirement unpinned, so `--require-hashes` refuses the whole
+  install and five Python jobs fail. Recompiled with
+  `uv pip compile --upgrade --python-version 3.9 --generate-hashes`, which
+  resolves the closure properly — maturin 1.15.0, packaging 26.3, pygments 2.21.0
+  — and holds pytest at 8.4.2, because the 3.9 floor still applies to it.
+
 ### Fixed
 
 - **A test spelled the version out, so the bump that fixed the release broke the
