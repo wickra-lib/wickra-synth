@@ -1,6 +1,6 @@
 {
   "name": "wickra-synth-example-node",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A runnable Node.js example for wickra-synth.",
   "type": "commonjs",

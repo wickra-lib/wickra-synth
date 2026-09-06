@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-06
+
+Completes what 0.1.0 could not. That tag reached crates.io, PyPI, Maven Central,
+NuGet, the Go mirror and `wickra-synth-wasm`, then failed on the npm job before
+publishing the main package or its six platform packages — so `wickra-synth` has
+no 0.1.0 on npm, and there is no GitHub release for the tag.
+
 ### Fixed
+
+- **A test spelled the version out, so the bump that fixed the release broke the
+  build.** `version_command` asserted against the literal `0.1.0`, which makes
+  every version bump fail a test — and makes the release the thing that
+  discovers it. It reads `CARGO_PKG_VERSION` now; the shape of the reply is what
+  the assertion was for.
 
 - **The npm publish asked whether the binaries had been moved, two steps before
   moving them.** `Every platform package has its binary` reads
@@ -363,5 +376,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   version touchpoint says `0.1.0`, so a bump would have left it behind
   silently.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wickra-lib/wickra-synth/releases/tag/v0.1.0

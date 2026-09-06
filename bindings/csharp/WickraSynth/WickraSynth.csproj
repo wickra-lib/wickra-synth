@@ -10,7 +10,7 @@
     <AssemblyName>Wickra.Synth</AssemblyName>
 
     <PackageId>Wickra.Synth</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>kingchenc</Authors>
     <Description>Deterministic synthetic market-microstructure generation for .NET over the Wickra C ABI: a seeded GenSpec produces byte-identical OHLCV candles, order-book snapshots, trades and funding across every language binding.</Description>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>

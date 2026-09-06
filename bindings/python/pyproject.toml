@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "wickra-synth"
-version = "0.1.0"
+version = "0.1.1"
 description = "Deterministic synthetic market microstructure (OHLCV, order book, trades, funding) from a seed, byte-identical across languages."
 readme = "README.md"
 license = "MIT OR Apache-2.0"

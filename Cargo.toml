@@ -19,7 +19,7 @@ members = ["crates/synth-core", "crates/synth-cli", "crates/synth-bench", "examp
 exclude = ["fuzz"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.86"
 license = "MIT OR Apache-2.0"
@@ -39,7 +39,7 @@ wickra-core = "1.0"
 # Workspace-internal crate, referenced by the CLI, bench and bindings.
 # The generator is sequential by construction: every draw comes from one PRNG
 # stream in a fixed order, so bar N cannot be produced before bar N-1.
-wickra-synth-core = { version = "0.1.0", path = "crates/synth-core", default-features = false }
+wickra-synth-core = { version = "0.1.1", path = "crates/synth-core", default-features = false }
 # Serialization — the data-driven boundary (spec/command/output as JSON).
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

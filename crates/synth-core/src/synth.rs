@@ -166,7 +166,12 @@ mod tests {
     fn version_command() {
         let mut s = Synth::new("").unwrap();
         let r = s.command_json(r#"{"cmd":"version"}"#).unwrap();
-        assert_eq!(r, r#"{"version":"0.1.0"}"#);
+        // Read the version rather than spelling it out: written as a literal,
+        // this assertion failed on the first bump that touched it, which makes
+        // the release the thing that discovers it. The shape is what is under
+        // test here, and the shape is what a literal was proving.
+        let expected = format!(r#"{{"version":"{}"}}"#, env!("CARGO_PKG_VERSION"));
+        assert_eq!(r, expected);
     }
 
     #[test]
