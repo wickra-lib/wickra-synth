@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-06
+
 ### Fixed
 
 - **`Lint workflows` was red on `main`, and every pull request inherited it.**
@@ -347,4 +349,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   version touchpoint says `0.1.0`, so a bump would have left it behind
   silently.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-synth/commits/main
+[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/wickra-lib/wickra-synth/releases/tag/v0.1.0
