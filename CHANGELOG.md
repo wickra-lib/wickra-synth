@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The R package builds for WebAssembly on r-universe.** `configure`
+  refused the wasm target outright, so the `wasm-release` job was red on every
+  build. The r-universe wasm image ships cargo and emscripten, so `configure`
+  now builds the C ABI staticlib from the release tag's source for
+  `wasm32-unknown-emscripten` right there and links it into the package
+  object, the way wickra and wickra-verify already did.
+
 ## [0.1.1] - 2026-09-06
 
 Completes what 0.1.0 could not. That tag reached crates.io, PyPI, Maven Central,
