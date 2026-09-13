@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-13
+
 ### Fixed
 
 - **The R package builds for WebAssembly on r-universe.** `configure`
@@ -396,6 +398,7 @@ no 0.1.0 on npm, and there is no GitHub release for the tag.
   version touchpoint says `0.1.0`, so a bump would have left it behind
   silently.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wickra-lib/wickra-synth/releases/tag/v0.1.0
