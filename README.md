@@ -56,7 +56,7 @@ the ten languages below.
 
 ## Status
 
-Early development (0.1.1). The core, the reference CLI, the ten-language
+Early development (0.1.2). The core, the reference CLI, the ten-language
 binding surface, the golden corpus and the full CI matrix are in place; the
 generation model and command protocol are pinned by golden tests.
 
