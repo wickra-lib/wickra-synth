@@ -39,7 +39,7 @@ echo "==> Python (.github/requirements/ci-dev.txt via uv)"
 # the machine of everyone who regenerates a lockfile. Set WKSYNTH_BOOTSTRAP_UV=1
 # to opt in; the bootstrap then fetches one pinned release archive and refuses to
 # use it unless its checksum matches the one recorded here.
-UV_VERSION="0.12.10"
+UV_VERSION="0.12.13"
 uv_sha256() {
   case "$1" in
     x86_64-unknown-linux-gnu)  echo "173d95a0c32d18c896c46ba6fafbf3cf9c14ab74b033f81b76c883ef492a976b" ;;
