@@ -43,7 +43,7 @@ wickra-synth-core = { version = "0.1.2", path = "crates/synth-core", default-fea
 # Serialization — the data-driven boundary (spec/command/output as JSON).
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "1"
+toml = "1.1"
 thiserror = "2"
 clap = { version = "4", features = ["derive"] }
 # C ABI header generation.

@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The Python 3.9 CI row installs no pytest.** One `ci-dev.txt` compiled for
+  3.9 served every matrix row, which held pytest at 8.4.2 (below the fix for
+  GHSA-6w46-j5rx-g56g) for 3.13 as well, needed an OSV suppression to say so
+  and a Dependabot hold on the pytest major. The lock is split the way the
+  family's is -- `ci-dev-py3.txt` with pytest 9.1.1 for 3.10 and up and the
+  example job, `ci-dev-py39.txt` with maturin alone -- and the 3.9 row runs the
+  same three modules through `bindings/python/tests/run_without_pytest.py`.
+  `test_golden` loops over the corpus rather than parametrizing, with the spec
+  name in the message; the suppression and the hold go with the exposure.
+- **`fuzz/Cargo.lock` is a local artifact.** It was committed so a detached
+  workspace would resolve the same everywhere, and it aged: it still named the
+  crates at 0.1.0 two releases later, because nothing that bumps the workspace
+  refreshes a detached lock. It is untracked and ignored now like in 22
+  siblings; the `/fuzz` Dependabot entry stays and moves the manifest's ranges.
+- **The repository spells shared things the way the family does.** A cross-repo
+  scan lined the 24 wickra-lib repositories up and this one also differed in:
+  `toml = "1"` where the family writes `"1.1"`, the Maven compiler and surefire
+  plugins one line behind (3.16.0 / 3.6.0), `@napi-rs/cli` ^3.8.6 against
+  ^3.9.0, `codspeed-criterion-compat = "5"` against `"5.0.1"`, the C example's
+  `CMAKE_CXX_STANDARD` 14 where the family builds with 17, the example job
+  running the newest Go and Java rather than the floors (`go 1.23`,
+  `release 22`, `dotnet 8.0.x` now), and `examples/node` absent from Dependabot.
+
 ### Fixed
 
 - **The pinned `uv` bootstrap could not verify its download.**
