@@ -49,7 +49,7 @@ and R**, so a developer in any language draws the same synthetic market.
 
 ## Status
 
-**0.1.2 — the current release.** The core, the reference CLI, the ten-language
+**0.1.3 — the current release.** The core, the reference CLI, the ten-language
 binding surface, the golden corpus and the full CI matrix are in place; the
 generation model and command protocol are pinned by golden tests.
 
