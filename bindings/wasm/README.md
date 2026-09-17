@@ -37,7 +37,7 @@ The output lands in `pkg/`.
 ## Quick start
 
 ```js
-import init, { Synth } from "./pkg/wickra_synth_wasm.js";
+import init, { Synth } from "wickra-synth-wasm";
 
 await init();
 
