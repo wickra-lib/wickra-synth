@@ -483,7 +483,7 @@ jobs:
       - name: Set up Java
         id: setup_java
         continue-on-error: true # the CDN flakes; the retry below is the point
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "25"
@@ -498,7 +498,7 @@ jobs:
 
       - name: Set up Java (retry)
         if: steps.setup_java.outcome == 'failure'
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "25"
@@ -880,7 +880,7 @@ jobs:
       - name: Set up Java
         id: setup_java
         continue-on-error: true # the CDN flakes; the retry below is the point
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "22"
@@ -895,7 +895,7 @@ jobs:
 
       - name: Set up Java (retry)
         if: steps.setup_java.outcome == 'failure'
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: "22"
