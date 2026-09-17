@@ -50,8 +50,12 @@ TOUCHPOINTS: list[tuple[str, str, int]] = [
     ("bindings/node/package.json", r'"version": "{v}"', 1),
     ("bindings/node/package.json", r'"wickra-synth-[a-z0-9-]+": "{v}"', 6),
     # The lockfile records the same numbers; npm ci fails loudly when it drifts.
-    ("bindings/node/package-lock.json", r'"version": "{v}"', 2),
+    # The root package states its version twice (top and `packages[""]`), and
+    # since the platform packages are on npm the lock resolves each of them to
+    # its own record too -- six more `"version"` lines that are ours.
+    ("bindings/node/package-lock.json", r'"name": "wickra-synth",\s+"version": "{v}"', 2),
     ("bindings/node/package-lock.json", r'"wickra-synth-[a-z0-9-]+": "{v}"', 6),
+    ("bindings/node/package-lock.json", r'"node_modules/wickra-synth-[a-z0-9-]+": \{{\s+"version": "{v}"', 6),
     # JVM and .NET.
     ("bindings/java/pom.xml", r"<version>{v}</version>", 1),
     ("bindings/csharp/WickraSynth/WickraSynth.csproj", r"<Version>{v}</Version>", 1),
