@@ -14,7 +14,7 @@ xoshiro256++) and the fixed per-bar draw order. See
 [`docs/DETERMINISM.md`](../docs/DETERMINISM.md) for the PRNG contract and the
 binding draw order that make this reproducible across all ten languages.
 
-## Fixtures
+## Layout
 
 | Spec | Regime(s) | Notes |
 |------|-----------|-------|
