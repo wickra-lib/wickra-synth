@@ -21,7 +21,7 @@ wickra-synth-core = { workspace = true }
 # `criterion_main!`. Outside the CodSpeed runner it behaves as criterion does, so
 # `cargo bench` locally is unaffected -- and inside it, the benches are actually
 # instrumented. Without the alias they run and report nothing, silently.
-criterion = { package = "codspeed-criterion-compat", version = "5", features = ["html_reports"] }
+criterion = { package = "codspeed-criterion-compat", version = "5.0.1", features = ["html_reports"] }
 serde_json = { workspace = true }
 
 [[bench]]

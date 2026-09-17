@@ -3,7 +3,7 @@
 # Regenerate every committed lockfile in the workspace:
 #   - Rust:   Cargo.lock, fuzz/Cargo.lock        (cargo update)
 #   - Node:   bindings/node/package-lock.json    (npm install --package-lock-only)
-#   - Python: .github/requirements/ci-dev.txt    (uv pip compile --generate-hashes)
+#   - Python: .github/requirements/*.txt        (uv pip compile --generate-hashes)
 #
 # Run from anywhere; the script cd's to the repository root itself:
 #
@@ -33,7 +33,7 @@ cargo update
 echo "==> Node (bindings/node/package-lock.json)"
 (cd bindings/node && npm install --package-lock-only --no-audit --no-fund)
 
-echo "==> Python (.github/requirements/ci-dev.txt via uv)"
+echo "==> Python (.github/requirements/*.txt via uv)"
 # uv is not installed for you unless you ask. Piping an installer URL into a
 # shell runs whatever is behind that URL at that moment, with your privileges, on
 # the machine of everyone who regenerates a lockfile. Set WKSYNTH_BOOTSTRAP_UV=1
@@ -83,7 +83,7 @@ fi
 
 req=".github/requirements"
 cc="./scripts/update-lockfiles.sh"
-uv pip compile --quiet --python-version 3.9 --generate-hashes \
-  --custom-compile-command "$cc" "$req/ci-dev.in" -o "$req/ci-dev.txt"
+uv pip compile --quiet --python-version 3.9  --generate-hashes --custom-compile-command "$cc" "$req/ci-dev-py39.in" -o "$req/ci-dev-py39.txt"
+uv pip compile --quiet --python-version 3.11 --generate-hashes --custom-compile-command "$cc" "$req/ci-dev-py3.in"  -o "$req/ci-dev-py3.txt"
 
 echo "==> Done. Review 'git diff' before committing."
