@@ -35,3 +35,11 @@ never after it.
 Keeping this file short is deliberate. Without it, a reader opening `docs/` has
 no way to tell which pages are contracts and which are prose, and a second
 documentation tree grows in the repository beside the first.
+
+## Editing the docs
+
+The documentation site is a separate git repository at
+`https://github.com/wickra-lib/wickra-synth-site`. Open a pull request there to
+propose changes; the site is built with VitePress and deploys to
+`synth.wickra.org`. The files in this directory change in the same commit as
+the code they describe.

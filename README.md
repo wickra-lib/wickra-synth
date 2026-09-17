@@ -19,16 +19,14 @@
 [![OpenSSF Scorecard](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/scorecard.svg)](https://scorecard.dev/viewer/?uri=github.com/wickra-lib/wickra-synth)
 [![OpenSSF Best Practices](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/best-practices.svg)](https://www.bestpractices.dev)
 [![Build provenance](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/provenance.svg)](https://github.com/wickra-lib/wickra-synth/attestations)
-[![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/docs.svg)](https://wickra.org)
+[![Docs](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/docs.svg)](https://synth.wickra.org)
 [![Verified across 10 languages](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/verified.svg)](golden/)
 
 ---
 
-# Wickra Synth
-
 **Deterministic synthetic market microstructure — OHLCV, order book, trades and funding from a single seed, byte-identical across ten languages.**
 
-> **Part of the [Wickra ecosystem](https://github.com/wickra-lib):** the same data-driven core and ten-language binding surface also power [wickra-exchange](https://github.com/wickra-lib/wickra-exchange), [wickra-backtest](https://github.com/wickra-lib/wickra-backtest), [wickra-terminal](https://github.com/wickra-lib/wickra-terminal) and 20 more — see [the full list](https://github.com/wickra-lib).
+**Part of the [Wickra ecosystem](#ecosystem):** the same data-driven core and ten-language binding surface also power [wickra-exchange](https://github.com/wickra-lib/wickra-exchange), [wickra-backtest](https://github.com/wickra-lib/wickra-backtest), [wickra-terminal](https://github.com/wickra-lib/wickra-terminal) and 20 more — see [the full list](https://github.com/wickra-lib).
 
 Wickra Synth is one data-driven core, `wickra-synth-core`: a serde **`GenSpec`**
 describes a market regime, a fixed **portable PRNG** (SplitMix64 seeding
@@ -45,18 +43,9 @@ ABI and WASM unchanged. The core is exposed as a **JSON-over-C-ABI data API**
 (`Synth::command_json`) in **Rust, Python, Node.js, WASM, C, C++, C#, Go, Java
 and R**, so a developer in any language draws the same synthetic market.
 
-```bash
-cargo install wickra-synth
-wickra-synth --seed 42 --bars 20 --format json
-```
-
-Twenty bars of OHLCV, an order book, trades and funding, from nothing but the
-number 42 — and the same twenty bars on every platform and in every one of
-the ten languages below.
-
 ## Status
 
-Early development (0.1.2). The core, the reference CLI, the ten-language
+**0.1.2 — the current release.** The core, the reference CLI, the ten-language
 binding surface, the golden corpus and the full CI matrix are in place; the
 generation model and command protocol are pinned by golden tests.
 
@@ -72,6 +61,18 @@ generation model and command protocol are pinned by golden tests.
 - [MICROSTRUCTURE.md](docs/MICROSTRUCTURE.md) — order book, trades and funding.
 - [DETERMINISM.md](docs/DETERMINISM.md) — the PRNG and the fixed draw-order contract.
 - [Cookbook.md](docs/Cookbook.md) — practical recipes.
+
+## Quickstart
+
+```bash
+cargo install wickra-synth
+wickra-synth --seed 42 --bars 20 --format json
+```
+
+Twenty bars of OHLCV, an order book, trades and funding, from nothing but the
+number 42 — and the same twenty bars on every platform and in every one of
+the ten languages below. The spec that shaped them is JSON, so the same seed
+and spec reproduce the same market from any binding.
 
 ## Use in any language
 
@@ -91,33 +92,6 @@ print(len(out["candles"]))  # 20
 
 Runnable examples for all ten languages — each printing the same first three
 candles — live in [`examples/`](examples/).
-
-## Requirements
-
-The core needs nothing but a Rust toolchain — no system libraries, no BLAS, no
-Python at build time. Each binding adds only its own runtime:
-
-| Reach | Floor | Where it is declared |
-|-------|-------|----------------------|
-| Rust (workspace) | 1.86 | `Cargo.toml`, `rust-version` |
-| Rust (Node binding build) | 1.88 | `bindings/node/Cargo.toml` — napi-build needs it |
-| Python | 3.9 | `bindings/python/pyproject.toml`, `requires-python` (abi3) |
-| Node.js | 22 | `bindings/node/package.json`, `engines.node` |
-| .NET | 8.0 | `bindings/csharp/WickraSynth/WickraSynth.csproj` |
-| Go | 1.23 | `bindings/go/go.mod` |
-| Java | 22 | `bindings/java/pom.xml` — the Foreign Function & Memory API |
-| R | 4.1 | `bindings/r/DESCRIPTION`, `Depends` |
-
-`scripts/check_version_sync.py` holds these numbers against the manifests, so a
-floor that moves in one place and not the other is a failing check rather than a
-support question.
-
-## Benchmarks
-
-Per-generation throughput is tracked in [BENCHMARKS.md](BENCHMARKS.md) and
-measured by the `synth-bench` crate (`cargo bench -p synth-bench`). A shallow
-book with light trade flow generates roughly 4.3 million candles per second; the
-microstructure, not the price walk, is what the time goes on.
 
 ## Project layout
 
@@ -193,6 +167,33 @@ Per-binding commands are in [CONTRIBUTING.md](CONTRIBUTING.md); the
 `scripts/check_*.py` family holds the version, licence, link and binding-surface
 invariants that no compiler checks.
 
+## Requirements
+
+The core needs nothing but a Rust toolchain — no system libraries, no BLAS, no
+Python at build time. Each binding adds only its own runtime:
+
+| Reach | Floor | Where it is declared |
+|-------|-------|----------------------|
+| Rust (workspace) | 1.86 | `Cargo.toml`, `rust-version` |
+| Rust (Node binding build) | 1.88 | `bindings/node/Cargo.toml` — napi-build needs it |
+| Python | 3.9 | `bindings/python/pyproject.toml`, `requires-python` (abi3) |
+| Node.js | 22 | `bindings/node/package.json`, `engines.node` |
+| .NET | 8.0 | `bindings/csharp/WickraSynth/WickraSynth.csproj` |
+| Go | 1.23 | `bindings/go/go.mod` |
+| Java | 22 | `bindings/java/pom.xml` — the Foreign Function & Memory API |
+| R | 4.1 | `bindings/r/DESCRIPTION`, `Depends` |
+
+`scripts/check_version_sync.py` holds these numbers against the manifests, so a
+floor that moves in one place and not the other is a failing check rather than a
+support question.
+
+## Benchmarks
+
+Per-generation throughput is tracked in [BENCHMARKS.md](BENCHMARKS.md) and
+measured by the `synth-bench` crate (`cargo bench -p synth-bench`). A shallow
+book with light trade flow generates roughly 4.3 million candles per second; the
+microstructure, not the price walk, is what the time goes on.
+
 ## Ecosystem
 
 Wickra Synth is one repository in a family that shares a core and a
@@ -225,15 +226,20 @@ PRNG is a fast non-cryptographic generator for reproducible simulation — it is
 
 ## License
 
-Dual-licensed under either of
+Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
-- MIT license ([LICENSE-MIT](LICENSE-MIT))
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
-at your option. Unless you explicitly state otherwise, any contribution
-intentionally submitted for inclusion in this work, as defined in the Apache-2.0
-license, shall be dual-licensed as above, without any additional terms or
-conditions.
+at your option. Use it, fork it, modify it, redistribute it — commercially or
+not — file issues, send pull requests; all welcome.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
 ## Disclaimer
 
