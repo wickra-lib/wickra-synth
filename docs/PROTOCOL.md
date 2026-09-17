@@ -33,7 +33,7 @@ instead of one.
 ```
 
 ```json
-{"version": "0.1.2"}
+{"version": "0.1.3"}
 ```
 
 The crate version. Takes no spec and never fails.
