@@ -4,14 +4,14 @@
 
 [![CI](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/ci.svg)](https://github.com/wickra-lib/wickra-synth/actions/workflows/ci.yml)
 [![codecov](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/codecov.svg)](https://codecov.io/gh/wickra-lib/wickra-synth)
-[![Go module](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/go.svg)](https://pkg.go.dev/github.com/wickra-lib/wickra-synth/bindings/go)
+[![Go module](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/go.svg)](https://pkg.go.dev/github.com/wickra-lib/wickra-synth-go)
 [![License: MIT OR Apache-2.0](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/license.svg)](https://github.com/wickra-lib/wickra-synth#license)
 
 # Wickra Synth — Go
 
 ---
 
-**Deterministic synthetic market microstructure — for Go. `go get github.com/wickra-lib/wickra-synth/bindings/go` — over the C ABI via cgo, prebuilt library bundled in the module.**
+**Deterministic synthetic market microstructure — for Go. `go get github.com/wickra-lib/wickra-synth-go` — over the C ABI via cgo, prebuilt library bundled in the module.**
 
 Go bindings for the Wickra synthetic-microstructure generator over its C ABI hub
 via cgo. A `Synth` is built from a spec JSON and driven over a JSON boundary, so
