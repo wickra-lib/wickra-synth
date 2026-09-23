@@ -47,6 +47,27 @@ ABI and WASM unchanged. The core is exposed as a **JSON-over-C-ABI data API**
 (`Synth::command_json`) in **Rust, Python, Node.js, WASM, C, C++, C#, Go, Java
 and R**, so a developer in any language draws the same synthetic market.
 
+```rust
+use wickra_synth_core::{generate, GenSpec};
+
+// A spec is data: a seed, a length, and the regimes the price path walks
+// through. Nothing else is random, so the same seed draws the same market
+// on every platform and through every binding.
+let spec = GenSpec::from_json(spec_json)?;
+let out = generate(&spec)?;
+println!("{} candles, {} trades", out.candles.len(), out.trades.len());
+
+// Replaying the seed replays the bytes -- that is the whole contract.
+assert_eq!(generate(&spec)?, out);
+```
+
+The same generation from the command line:
+
+```bash
+cargo install wickra-synth
+wickra-synth --seed 42 --bars 20 --format json
+```
+
 ## Status
 
 **0.1.3 — the current release.** The core, the reference CLI, the ten-language
