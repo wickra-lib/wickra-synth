@@ -17,7 +17,7 @@ fn the_readme_snippet_compiles_and_replays() -> Result<(), Box<dyn std::error::E
     let spec = GenSpec::from_json(SPEC)?;
     let out = generate(&spec)?;
     assert_eq!(out.candles.len(), 20);
-    assert!(!out.trades.is_empty());
+    assert_ne!(out.trades, Vec::new());
     assert_eq!(generate(&spec)?, out);
     Ok(())
 }

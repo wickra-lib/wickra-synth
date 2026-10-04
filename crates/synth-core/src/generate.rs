@@ -253,7 +253,7 @@ mod tests {
         let mut spec = trend_spec();
         spec.microstructure.funding = None;
         let out = generate(&spec).unwrap();
-        assert!(out.funding.is_empty());
+        assert_eq!(out.funding, Vec::new());
     }
 
     #[test]

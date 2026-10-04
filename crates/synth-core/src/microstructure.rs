@@ -136,7 +136,7 @@ mod tests {
         let mut seq = 0u64;
         let mid = 100.0;
         let trades = build_trades(&mut rng, mid, 0.5, 1_700_000_000, &mut seq, 20.0);
-        assert!(!trades.is_empty());
+        assert_ne!(trades, Vec::new());
         assert_eq!(seq, trades.len() as u64);
         for (i, t) in trades.iter().enumerate() {
             assert_eq!(t.seq, i as u64);
@@ -154,7 +154,7 @@ mod tests {
         let mut rng = DetRng::from_seed(3);
         let mut seq = 0u64;
         let trades = build_trades(&mut rng, 100.0, 0.5, 1, &mut seq, 0.0);
-        assert!(trades.is_empty());
+        assert_eq!(trades, Vec::new());
         assert_eq!(seq, 0);
     }
 
