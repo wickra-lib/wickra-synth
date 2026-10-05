@@ -1140,7 +1140,7 @@ dependencies = [
 
 [[package]]
 name = "synth-bench"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "codspeed-criterion-compat",
  "serde_json",
@@ -1344,9 +1344,9 @@ dependencies = [
 
 [[package]]
 name = "wickra-core"
-version = "1.0.7"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9de44a7d1a465021f41c4a182463493a4c1053efbbfdde8fa6a3fcbd6dcc4d62"
+checksum = "b62035347edf307f399651a8b5b28b3883fdc17b891605fd92d95cc4b2e1f749"
 dependencies = [
  "rayon",
  "thiserror",
@@ -1355,9 +1355,9 @@ dependencies = [
 
 [[package]]
 name = "wickra-data"
-version = "1.0.7"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dcd22568464c3a55d79ecffadd151195d37312d9a2c6412abe1095dccfd3163"
+checksum = "16a13e69ef914a316ae137ec074c8e34384e77fbf4c7491ef86388f91506e8aa"
 dependencies = [
  "csv",
  "serde",
@@ -1368,13 +1368,13 @@ dependencies = [
 
 [[package]]
 name = "wickra-simd"
-version = "1.0.7"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80fc26f4f971339fd785bb1445229f90699c9b954c16202f3a63ee9b9e2f2114"
+checksum = "dd924c51e4871af15651e173fd4d88269455e0b3e9524aa3f24ed72a16bf40e6"
 
 [[package]]
 name = "wickra-synth"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "clap",
  "serde_json",
@@ -1384,14 +1384,14 @@ dependencies = [
 
 [[package]]
 name = "wickra-synth-c"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "wickra-synth-core",
 ]
 
 [[package]]
 name = "wickra-synth-core"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "proptest",
  "serde",
@@ -1403,7 +1403,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-synth-example"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "serde_json",
  "wickra-synth-core",
@@ -1411,7 +1411,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-synth-node"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -1421,7 +1421,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-synth-python"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "pyo3",
  "wickra-synth-core",
@@ -1429,7 +1429,7 @@ dependencies = [
 
 [[package]]
 name = "wickra-synth-wasm"
-version = "0.1.4"
+version = "0.2.0"
 dependencies = [
  "wasm-bindgen",
  "wickra-synth-core",
