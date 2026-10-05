@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-05
+
+Generation is unchanged; the optional indicator oracle and the CSV reader move
+to wickra 2.0.
+
+### Changed
+
+- **wickra-core and wickra-data 2.0,** the formula-audit release. The `validate`
+  feature's oracle (an SMA) and the CLI's CSV candle reader are unchanged in 2.0.
+
 ## [0.1.4] - 2026-09-23
 
 A maintenance release: the generator and its bindings are unchanged. It
@@ -532,7 +542,8 @@ no 0.1.0 on npm, and there is no GitHub release for the tag.
   version touchpoint says `0.1.0`, so a bump would have left it behind
   silently.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.1...v0.1.2

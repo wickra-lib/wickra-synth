@@ -1,6 +1,6 @@
 {
   "name": "wickra-synth-linux-x64-gnu",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Native binding for wickra-synth (Linux x64 GNU). Installed automatically as an optional dependency of wickra-synth on matching platforms.",
   "main": "wickra-synth.linux-x64-gnu.node",
   "files": [
