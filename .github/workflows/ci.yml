@@ -39,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-26.04, windows-latest, macos-latest]
         features: ["--all-features", "--no-default-features"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop: three OS times two feature sets; the Windows link step is the slow one
@@ -63,7 +63,7 @@ jobs:
 
   lint:
     name: Format & Clippy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20 # backstop: fmt plus clippy over the workspace on both feature sets
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -79,7 +79,7 @@ jobs:
 
   msrv:
     name: MSRV workspace (1.86)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20 # backstop: a full cold build on the oldest supported toolchain
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -97,7 +97,7 @@ jobs:
 
   msrv-node:
     name: MSRV node (1.88)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20 # backstop: the same, for the napi crate's higher floor
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -113,7 +113,7 @@ jobs:
 
   supply-chain:
     name: cargo-deny
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15 # backstop: a cargo-deny download plus one advisory pass
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -126,7 +126,7 @@ jobs:
 
   cli:
     name: CLI smoke (quick-spec + spec file)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20 # backstop: one debug build and three invocations
     env:
       RUSTFLAGS: "-C debuginfo=0"
@@ -151,7 +151,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop: release build, cbindgen, and the CMake examples on three OS
     steps:
@@ -188,7 +188,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-26.04, windows-latest, macos-latest]
         python-version: ["3.9", "3.11", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop: maturin builds the extension once per interpreter
@@ -252,7 +252,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
         node-version: ["22", "24"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop: napi builds the addon once per Node version
@@ -319,7 +319,7 @@ jobs:
 
   wasm:
     name: WASM
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30 # backstop: two wasm-pack builds plus the golden run
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -351,7 +351,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop: cgo links the C ABI on three OS
     steps:
@@ -427,7 +427,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25 # backstop: restore, build and test on three OS
     steps:
@@ -468,7 +468,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25 # backstop: Maven resolves its plugin tree cold on three OS
     steps:
@@ -512,7 +512,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30 # backstop: R CMD INSTALL compiles the glue and stages the library
     env:
@@ -581,7 +581,7 @@ jobs:
       # shipped 0 of 13 platform binaries. Ubuntu only; these checks are
       # platform-independent.
       - name: R CMD check, the way r-universe will
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-26.04'
         shell: bash
         run: |
           set -euo pipefail
@@ -598,7 +598,7 @@ jobs:
 
   coverage:
     name: Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30 # backstop: an instrumented build of wickra-synth-core plus the upload
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -639,7 +639,7 @@ jobs:
   # names. Each of these failed silently until something downstream noticed.
   binding-surface:
     name: Binding surface parity
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -683,7 +683,7 @@ jobs:
   # persistent corpus.
   fuzz-smoke:
     name: Fuzz (smoke)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30 # backstop: four targets at 30 s plus building all of them
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -741,7 +741,7 @@ jobs:
   # checked whether a change kept it.
   semver:
     name: Public API (cargo-semver-checks)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30 # backstop: it builds rustdoc JSON for each crate and its baseline
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -785,7 +785,7 @@ jobs:
   # would have noticed.
   examples-smoke:
     name: Examples (all ten reaches)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1010,7 +1010,7 @@ jobs:
   # in the container fails for the first time during the release, after the tag.
   python-wheel-container-smoke:
     name: Python wheel (${{ matrix.manylinux }} smoke)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -1059,7 +1059,7 @@ jobs:
   # `failure`, the commit shows red and a release gate reading check runs stops.
   links:
     name: External links (non-blocking)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1086,7 +1086,7 @@ jobs:
   # which is five of the ten reaches nothing was scanning at all.
   osv-scan:
     name: OSV scanner
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1133,7 +1133,7 @@ jobs:
       - examples-smoke
       - python-wheel-container-smoke
       - osv-scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
