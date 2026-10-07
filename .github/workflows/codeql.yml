@@ -23,7 +23,7 @@ permissions:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60 # backstop: database build plus query pack execution, per language
     permissions:
       security-events: write # upload CodeQL results to code-scanning

@@ -48,7 +48,7 @@ jobs:
     # Generous because this job waits for ci.yml to settle on the tagged commit;
     # the wait itself is bounded to 45 minutes inside the step.
     timeout-minutes: 60
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       actions: read # read the workflow runs on the tagged commit
@@ -183,7 +183,7 @@ jobs:
     name: Publish to crates.io
     timeout-minutes: 45
     needs: [gate]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -267,10 +267,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, target: x86_64, manylinux: auto }
-          - { os: ubuntu-latest, target: aarch64, manylinux: auto }
-          - { os: ubuntu-latest, target: x86_64, manylinux: musllinux_1_2 }
-          - { os: ubuntu-latest, target: aarch64, manylinux: musllinux_1_2 }
+          - { os: ubuntu-26.04, target: x86_64, manylinux: auto }
+          - { os: ubuntu-26.04, target: aarch64, manylinux: auto }
+          - { os: ubuntu-26.04, target: x86_64, manylinux: musllinux_1_2 }
+          - { os: ubuntu-26.04, target: aarch64, manylinux: musllinux_1_2 }
           - { os: macos-latest, target: x86_64, manylinux: auto }
           - { os: macos-latest, target: aarch64, manylinux: auto }
           - { os: windows-latest, target: x64, manylinux: auto }
@@ -322,7 +322,7 @@ jobs:
   python-sdist:
     name: Build Python sdist
     timeout-minutes: 45
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -343,7 +343,7 @@ jobs:
     name: Publish to PyPI
     timeout-minutes: 45
     needs: [gate, python-wheels, python-sdist]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -369,7 +369,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { host: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { host: ubuntu-26.04, target: x86_64-unknown-linux-gnu }
           - { host: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
           - { host: macos-latest, target: x86_64-apple-darwin }
           - { host: macos-latest, target: aarch64-apple-darwin }
@@ -405,7 +405,7 @@ jobs:
     name: Publish to npm
     timeout-minutes: 45
     needs: [gate, node-build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     permissions:
       contents: read
@@ -577,7 +577,7 @@ jobs:
   wasm-build:
     name: Build wickra-synth-wasm
     timeout-minutes: 45
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -635,7 +635,7 @@ jobs:
     name: Publish wickra-synth-wasm to npm
     timeout-minutes: 45
     needs: [gate, wasm-build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     permissions:
       contents: read
@@ -676,7 +676,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { host: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { host: ubuntu-26.04, target: x86_64-unknown-linux-gnu }
           - { host: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
           - { host: macos-latest, target: x86_64-apple-darwin }
           - { host: macos-latest, target: aarch64-apple-darwin }
@@ -725,7 +725,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { host: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { host: ubuntu-26.04, target: x86_64-unknown-linux-gnu }
           - { host: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
           - { host: macos-latest, target: x86_64-apple-darwin }
           - { host: macos-latest, target: aarch64-apple-darwin }
@@ -770,7 +770,7 @@ jobs:
     name: Publish to NuGet
     timeout-minutes: 45
     needs: [gate, c-abi-build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     permissions:
       contents: read
@@ -847,7 +847,7 @@ jobs:
     name: Publish to Maven Central
     timeout-minutes: 45
     needs: [gate, c-abi-build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -951,7 +951,7 @@ jobs:
     name: Mirror the Go module to wickra-synth-go
     timeout-minutes: 45 # backstop only: release build/publish jobs compile from source (vendored OpenSSL) and must not be killed mid-build; far above the ~10 min real runtime
     needs: [gate, c-abi-build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -1068,7 +1068,7 @@ jobs:
         java-publish,
         go-mirror,
       ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     outputs:
@@ -1183,7 +1183,7 @@ jobs:
         cli-binaries,
         github-release,
       ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       attestations: write
@@ -1269,7 +1269,7 @@ jobs:
     timeout-minutes: 45
     needs: [github-release, attestations]
     if: always() && needs.github-release.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
