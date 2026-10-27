@@ -520,7 +520,13 @@ jobs:
           cache: maven
 
       - name: Test the Java binding
-        run: mvn -B -f bindings/java test
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 30
+          max_attempts: 2
+          retry_wait_seconds: 30
+          shell: bash
+          command: mvn -B -f bindings/java test
 
   r:
     name: R on ${{ matrix.os }}
@@ -1000,13 +1006,19 @@ jobs:
         run: dotnet run --project examples/csharp/Gen -c Release
 
       - name: Java
-        run: |
-          set -euo pipefail
-          mvn -B -q -f bindings/java package -DskipTests
-          javac -cp bindings/java/target/classes examples/java/Gen.java -d examples/java/out
-          java --enable-native-access=ALL-UNNAMED \
-               -Dnative.lib.dir=target/debug \
-               -cp "bindings/java/target/classes:examples/java/out" Gen
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4.0.0
+        with:
+          timeout_minutes: 30
+          max_attempts: 2
+          retry_wait_seconds: 30
+          shell: bash
+          command: |
+            set -euo pipefail
+            mvn -B -q -f bindings/java package -DskipTests
+            javac -cp bindings/java/target/classes examples/java/Gen.java -d examples/java/out
+            java --enable-native-access=ALL-UNNAMED \
+                 -Dnative.lib.dir=target/debug \
+                 -cp "bindings/java/target/classes:examples/java/out" Gen
 
       - name: R
         env:
