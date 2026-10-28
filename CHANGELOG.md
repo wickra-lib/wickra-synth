@@ -19,6 +19,14 @@ A maintenance release: the generators and their output are unchanged.
   computes differently.
 - **uv 0.13.5** for the lockfile bootstrap in `scripts/update-lockfiles.sh`.
 
+### Fixed
+
+- **`central-publishing-maven-plugin` 0.12.0** for the Java binding. Since
+  early October the GitHub runners carry Maven 3.10.0, which writes
+  `maven-metadata-local.xml` and `_remote.repositories` into the staging
+  directory; 0.11.0 bundles them, and Central rejects the deployment with
+  "Bundle has content that does NOT have a .pom file".
+
 ## [0.2.0] - 2026-10-06
 
 Generation is unchanged; the optional indicator oracle and the CSV reader move
