@@ -16,7 +16,7 @@ recent published version once a release exists.
 | Version | Supported |
 |---------|-----------|
 | `main`  | ✅        |
-| `0.2.0` (upcoming) | ✅ |
+| `0.2.1` (upcoming) | ✅ |
 
 ## Reporting a vulnerability
 
