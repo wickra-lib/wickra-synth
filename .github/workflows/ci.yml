@@ -1136,8 +1136,21 @@ jobs:
       # --config is explicit: osv-scanner only picks the file up automatically
       # from the directory it is scanning, and a config that is silently ignored
       # is worse than no config, because the reasoning in it looks applied.
+      #
+      # The --lockfile arguments are not redundant with --recursive. OSV-Scanner
+      # discovers lockfiles by *filename*, and neither ci-dev-py3.txt nor
+      # ci-dev-py39.txt matches a pattern it recognises, so the recursive walk
+      # skipped every hash-locked file in .github/requirements/ and the Python
+      # CI dependencies were never scanned. They are named after what they
+      # install, which is the right name for a reader and the wrong one for the
+      # scanner, so the format is stated explicitly instead of renaming them. A
+      # new file there needs a line here.
       - name: Scan every manifest
-        run: osv-scanner scan source --config osv-scanner.toml --recursive .
+        run: >-
+          osv-scanner scan source --config osv-scanner.toml --recursive
+          --lockfile=requirements.txt:.github/requirements/ci-dev-py3.txt
+          --lockfile=requirements.txt:.github/requirements/ci-dev-py39.txt
+          .
 
   # One stable check name for branch protection: green only when every job
   # above succeeded or was skipped by its own condition. The advisory link
