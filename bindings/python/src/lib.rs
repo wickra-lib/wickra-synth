@@ -49,7 +49,8 @@ impl PySynth {
 
 /// The native module (`wickra_synth._wickra_synth`).
 #[pymodule]
-fn _wickra_synth(module: &Bound<'_, PyModule>) -> PyResult<()> {
+#[pyo3(name = "_wickra_synth")]
+fn wickra_synth_extension(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add("__version__", env!("CARGO_PKG_VERSION"))?;
     module.add_class::<PySynth>()?;
     Ok(())
