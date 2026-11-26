@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-26
+
+A maintenance release: it follows wickra-core 2.2.0, builds on Rust 1.100 and
+Go 1.27, and ships the refreshed dependency tree.
+
+### Changed
+
+- **Built on wickra-core 2.2.0** (from 2.1.0). The lock takes the indicator
+  core's release; the caret requirement already admitted it. Saturated `Rsi` and
+  `StochRsi` values are now exactly 100 (and 0), and `TtmSqueeze` detrends its
+  momentum per bar, as the reference does, with a warmup of `2 * period - 1`;
+  anything here that runs those indicators can report different values with it.
+- **Third-party dependencies refreshed.** `Cargo.lock` takes 58 crates at their
+  latest releases within the declared ranges. The npm and Python dev locks are
+  re-resolved the same way. No manifest changed.
+- **Dependabot's monthly updates** (GitHub Actions, Cargo, Maven, npm, NuGet): 7
+  pull requests, each checked against the versions the rest of the family holds.
+- **CI and release workflow:** point osv-scanner at the Python lockfiles it was
+  silently skipping; install the Node binding with npm ci now that the lock
+  names every platform package; correct the action version comments Dependabot
+  left behind; run every entry on the family's schedule and cooldown; use
+  setup-java's *-env-var inputs.
+
+### Fixed
+
+- **Builds on Rust 1.100.** Its `clippy::used_underscore_items` fires on the
+  code `#[pymodule]` generates for an underscore-named module function. The
+  function has a plain name now and `#[pyo3(name = "_...")]` keeps the extension
+  module's import name unchanged.
+- **The Go binding links on Windows with Go 1.27,** which rejects
+  `-l:<name>.dll` in `#cgo LDFLAGS` as an invalid flag. It is `-l<name>` now;
+  the MinGW linker resolves that to the same DLL.
+
+### Security
+
+- **rustix 1.1.6** in the lockfile, for RUSTSEC-2026-0486: xattr functions
+  marked unwritten bytes as initialised when given a zero-length buffer.
+
 ## [0.2.1] - 2026-10-28
 
 A maintenance release: the generators and their output are unchanged.
@@ -562,7 +600,8 @@ no 0.1.0 on npm, and there is no GitHub release for the tag.
   version touchpoint says `0.1.0`, so a bump would have left it behind
   silently.
 
-[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/wickra-lib/wickra-synth/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/wickra-lib/wickra-synth/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/wickra-lib/wickra-synth/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/wickra-lib/wickra-synth/compare/v0.1.3...v0.1.4
