@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.svg?v=514-8" alt="Wickra Synth — deterministic synthetic market microstructure: OHLCV, order book, trades and funding from a single seed, byte-identical across ten languages" width="100%"></a>
+  <a href="https://wickra.org"><img src="https://raw.githubusercontent.com/wickra-lib/.github/main/profile/wickra-banner.svg?v=515-8" alt="Wickra Synth — deterministic synthetic market microstructure: OHLCV, order book, trades and funding from a single seed, byte-identical across ten languages" width="100%"></a>
 </p>
 
 [![Built on Wickra](https://raw.githubusercontent.com/wickra-lib/.github/main/profile/badges/wickra-synth/built-on.svg)](https://github.com/wickra-lib/wickra)
@@ -28,7 +28,7 @@
 
 > **▶ Live demos:** the backtester compiled to WebAssembly, an equity curve building bar by bar — **[backtest-live.wickra.org](https://backtest-live.wickra.org)**;
 > one StrategySpec side by side in Python, Rust, JS and Go — **[playground.wickra.org](https://playground.wickra.org)**;
-> all 514 indicators of the core over a real Binance feed — **[live.wickra.org](https://live.wickra.org)**. Zero backend, all of them.
+> all 515 indicators of the core over a real Binance feed — **[live.wickra.org](https://live.wickra.org)**. Zero backend, all of them.
 
 **Part of the [Wickra ecosystem](#ecosystem):** the same data-driven core and ten-language binding surface also power [wickra-exchange](https://github.com/wickra-lib/wickra-exchange), [wickra-backtest](https://github.com/wickra-lib/wickra-backtest), [wickra-terminal](https://github.com/wickra-lib/wickra-terminal) and 20 more — see [the full list](https://github.com/wickra-lib).
 
@@ -70,7 +70,7 @@ wickra-synth --seed 42 --bars 20 --format json
 
 ## Status
 
-**0.2.1 — the current release.** The core, the reference CLI, the ten-language
+**0.2.2 — the current release.** The core, the reference CLI, the ten-language
 binding surface, the golden corpus and the full CI matrix are in place; the
 generation model and command protocol are pinned by golden tests.
 
@@ -224,7 +224,7 @@ microstructure, not the price walk, is what the time goes on.
 Wickra Synth is one repository in a family that shares a core and a
 ten-language binding surface:
 
-- [**wickra**](https://github.com/wickra-lib/wickra) — 514 streaming
+- [**wickra**](https://github.com/wickra-lib/wickra) — 515 streaming
   indicators, the core everything else is built on.
 - [**wickra-backtest**](https://github.com/wickra-lib/wickra-backtest) — a
   streaming-native backtester where backtest and live are the same code path.
