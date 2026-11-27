@@ -9,6 +9,7 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
 
 permissions:
@@ -35,6 +36,7 @@ env:
 
 jobs:
   test:
+    if: ${{ !github.event.pull_request.draft }}
     name: Test (${{ matrix.os }}, ${{ matrix.features }})
     strategy:
       fail-fast: false
@@ -62,6 +64,7 @@ jobs:
       - run: cargo test --workspace ${{ matrix.features }} --exclude wickra-synth-c --exclude wickra-synth-python
 
   lint:
+    if: ${{ !github.event.pull_request.draft }}
     name: Format & Clippy
     runs-on: ubuntu-latest
     timeout-minutes: 20 # backstop: fmt plus clippy over the workspace on both feature sets
@@ -78,6 +81,7 @@ jobs:
       - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
 
   msrv:
+    if: ${{ !github.event.pull_request.draft }}
     name: MSRV workspace (1.86)
     runs-on: ubuntu-latest
     timeout-minutes: 20 # backstop: a full cold build on the oldest supported toolchain
@@ -96,6 +100,7 @@ jobs:
       - run: cargo build --workspace --exclude wickra-synth-python --exclude wickra-synth-node
 
   msrv-node:
+    if: ${{ !github.event.pull_request.draft }}
     name: MSRV node (1.88)
     runs-on: ubuntu-latest
     timeout-minutes: 20 # backstop: the same, for the napi crate's higher floor
@@ -112,6 +117,7 @@ jobs:
       - run: cargo build -p wickra-synth-node
 
   supply-chain:
+    if: ${{ !github.event.pull_request.draft }}
     name: cargo-deny
     runs-on: ubuntu-latest
     timeout-minutes: 15 # backstop: a cargo-deny download plus one advisory pass
@@ -125,6 +131,7 @@ jobs:
       - run: cargo deny check
 
   cli:
+    if: ${{ !github.event.pull_request.draft }}
     name: CLI smoke (quick-spec + spec file)
     runs-on: ubuntu-latest
     timeout-minutes: 20 # backstop: one debug build and three invocations
@@ -147,6 +154,7 @@ jobs:
           ./target/debug/wickra-synth --spec golden/specs/trend.json --format json | grep -q '"candles"'
 
   c-abi:
+    if: ${{ !github.event.pull_request.draft }}
     name: C ABI on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -190,6 +198,7 @@ jobs:
           ctest --test-dir examples/c/build -C Release --output-on-failure
 
   python:
+    if: ${{ !github.event.pull_request.draft }}
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -263,6 +272,7 @@ jobs:
           fi
 
   node:
+    if: ${{ !github.event.pull_request.draft }}
     name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -340,6 +350,7 @@ jobs:
           }
 
   wasm:
+    if: ${{ !github.event.pull_request.draft }}
     name: WASM
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop: two wasm-pack builds plus the golden run
@@ -369,6 +380,7 @@ jobs:
         working-directory: bindings/wasm
 
   go:
+    if: ${{ !github.event.pull_request.draft }}
     name: Go on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -445,6 +457,7 @@ jobs:
           go test ./...
 
   csharp:
+    if: ${{ !github.event.pull_request.draft }}
     name: C# on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -486,6 +499,7 @@ jobs:
         run: dotnet test bindings/csharp/WickraSynth.Tests/WickraSynth.Tests.csproj -c Release
 
   java:
+    if: ${{ !github.event.pull_request.draft }}
     name: Java on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -536,6 +550,7 @@ jobs:
           command: mvn -B -f bindings/java test
 
   r:
+    if: ${{ !github.event.pull_request.draft }}
     name: R on ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -625,6 +640,7 @@ jobs:
           fi
 
   coverage:
+    if: ${{ !github.event.pull_request.draft }}
     name: Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop: an instrumented build of wickra-synth-core plus the upload
@@ -666,6 +682,7 @@ jobs:
   # binding owes the C ABI, and the R wrapper against the ABI its DESCRIPTION
   # names. Each of these failed silently until something downstream noticed.
   binding-surface:
+    if: ${{ !github.event.pull_request.draft }}
     name: Binding surface parity
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -710,6 +727,7 @@ jobs:
   # novel bugs -- long campaigns belong on dedicated infrastructure with a
   # persistent corpus.
   fuzz-smoke:
+    if: ${{ !github.event.pull_request.draft }}
     name: Fuzz (smoke)
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop: four targets at 30 s plus building all of them
@@ -768,6 +786,7 @@ jobs:
   # wickra-synth-core is a published library, so its public API is a promise. Nothing
   # checked whether a change kept it.
   semver:
+    if: ${{ !github.event.pull_request.draft }}
     name: Public API (cargo-semver-checks)
     runs-on: ubuntu-latest
     timeout-minutes: 30 # backstop: it builds rustdoc JSON for each crate and its baseline
@@ -812,6 +831,7 @@ jobs:
   # C#, Java, R and WebAssembly examples could have stopped compiling and no job
   # would have noticed.
   examples-smoke:
+    if: ${{ !github.event.pull_request.draft }}
     name: Examples (all ten reaches)
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -1043,6 +1063,7 @@ jobs:
   # Python job here builds on the runner itself, so a wheel that cannot be built
   # in the container fails for the first time during the release, after the tag.
   python-wheel-container-smoke:
+    if: ${{ !github.event.pull_request.draft }}
     name: Python wheel (${{ matrix.manylinux }} smoke)
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -1092,6 +1113,7 @@ jobs:
   # A job-level continue-on-error would not do: the check run still concludes
   # `failure`, the commit shows red and a release gate reading check runs stops.
   links:
+    if: ${{ !github.event.pull_request.draft }}
     name: External links (non-blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -1119,6 +1141,7 @@ jobs:
   # advisories; OSV also covers the npm, Maven, NuGet, Go and Python manifests,
   # which is five of the ten reaches nothing was scanning at all.
   osv-scan:
+    if: ${{ !github.event.pull_request.draft }}
     name: OSV scanner
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -1157,7 +1180,7 @@ jobs:
   # checks are left out on purpose -- an outside outage must not hold a merge.
   ci-ok:
     name: ci-ok
-    if: always()
+    if: ${{ !github.event.pull_request.draft && (always()) }}
     needs:
       - test
       - lint
